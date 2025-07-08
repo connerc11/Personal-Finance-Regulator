@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { User, AuthContextType, LoginData, RegisterData } from '../types';
+import { User, AuthContextType, RegisterData } from '../types';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -7,15 +7,28 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
+// Local storage keys
+const USERS_STORAGE_KEY = 'personalfinance_users';
+const CURRENT_USER_KEY = 'personalfinance_current_user';
+const TOKEN_KEY = 'personalfinance_token';
+
+// User database interface
+interface UserAccount extends User {
+  password: string; // In real app, this would be hashed
+}
+
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Initialize demo accounts and check for existing session
   useEffect(() => {
+    initializeDemoAccounts();
+    
     // Check for stored token and user on app start
-    const storedToken = localStorage.getItem('token');
-    const storedUser = localStorage.getItem('user');
+    const storedToken = localStorage.getItem(TOKEN_KEY);
+    const storedUser = localStorage.getItem(CURRENT_USER_KEY);
     
     if (storedToken && storedUser) {
       setToken(storedToken);
@@ -24,26 +37,83 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setIsLoading(false);
   }, []);
 
+  // Initialize demo accounts if they don't exist
+  const initializeDemoAccounts = () => {
+    const existingUsers = getUserDatabase();
+    
+    // Add demo account if it doesn't exist
+    if (!existingUsers.find(u => u.email === 'demo@personalfinance.com')) {
+      const demoUser: UserAccount = {
+        id: 1,
+        username: 'demo',
+        email: 'demo@personalfinance.com',
+        firstName: 'Demo',
+        lastName: 'User',
+        password: 'demo123',
+        createdAt: new Date('2024-01-01').toISOString(),
+      };
+      
+      const updatedUsers = [...existingUsers, demoUser];
+      localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(updatedUsers));
+    }
+  };
+
+  // Get user database from localStorage
+  const getUserDatabase = (): UserAccount[] => {
+    const stored = localStorage.getItem(USERS_STORAGE_KEY);
+    return stored ? JSON.parse(stored) : [];
+  };
+
+  // Save user database to localStorage
+  const saveUserDatabase = (users: UserAccount[]) => {
+    localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
+  };
+
+  // Find user by email
+  const findUserByEmail = (email: string): UserAccount | undefined => {
+    const users = getUserDatabase();
+    return users.find(user => user.email.toLowerCase() === email.toLowerCase());
+  };
+
+  // Find user by username
+  const findUserByUsername = (username: string): UserAccount | undefined => {
+    const users = getUserDatabase();
+    return users.find(user => user.username.toLowerCase() === username.toLowerCase());
+  };
+
   const login = async (email: string, password: string): Promise<void> => {
     setIsLoading(true);
     try {
-      // TODO: Replace with actual API call
-      const mockUser: User = {
-        id: 1,
-        username: email.split('@')[0],
-        email,
-        firstName: 'John',
-        lastName: 'Doe',
-        createdAt: new Date().toISOString(),
-      };
-      const mockToken = 'mock-jwt-token';
+      // Find user in our database
+      const userAccount = findUserByEmail(email);
+      
+      if (!userAccount) {
+        throw new Error('No account found with this email. Please sign up first.');
+      }
+      
+      // Check password (in real app, this would be hashed comparison)
+      if (userAccount.password !== password) {
+        throw new Error('Invalid password. Please try again.');
+      }
 
-      setUser(mockUser);
-      setToken(mockToken);
-      localStorage.setItem('token', mockToken);
-      localStorage.setItem('user', JSON.stringify(mockUser));
+      // Create user object without password
+      const authenticatedUser: User = {
+        id: userAccount.id,
+        username: userAccount.username,
+        email: userAccount.email,
+        firstName: userAccount.firstName,
+        lastName: userAccount.lastName,
+        createdAt: userAccount.createdAt,
+      };
+
+      const authToken = `jwt-token-${userAccount.id}-${Date.now()}`;
+
+      setUser(authenticatedUser);
+      setToken(authToken);
+      localStorage.setItem(TOKEN_KEY, authToken);
+      localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(authenticatedUser));
     } catch (error) {
-      throw new Error('Login failed');
+      throw error;
     } finally {
       setIsLoading(false);
     }
@@ -52,23 +122,51 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const register = async (userData: RegisterData): Promise<void> => {
     setIsLoading(true);
     try {
-      // TODO: Replace with actual API call
-      const mockUser: User = {
-        id: Date.now(),
+      // Check if user already exists
+      const existingUserByEmail = findUserByEmail(userData.email);
+      if (existingUserByEmail) {
+        throw new Error('An account with this email already exists. Please sign in instead.');
+      }
+      
+      const existingUserByUsername = findUserByUsername(userData.username);
+      if (existingUserByUsername) {
+        throw new Error('This username is already taken. Please choose a different username.');
+      }
+
+      // Create new user account
+      const newUserAccount: UserAccount = {
+        id: Date.now(), // In real app, this would be generated by backend
         username: userData.username,
         email: userData.email,
         firstName: userData.firstName,
         lastName: userData.lastName,
+        password: userData.password, // In real app, this would be hashed
         createdAt: new Date().toISOString(),
       };
-      const mockToken = 'mock-jwt-token';
 
-      setUser(mockUser);
-      setToken(mockToken);
-      localStorage.setItem('token', mockToken);
-      localStorage.setItem('user', JSON.stringify(mockUser));
+      // Save to user database
+      const users = getUserDatabase();
+      users.push(newUserAccount);
+      saveUserDatabase(users);
+
+      // Create user object without password
+      const authenticatedUser: User = {
+        id: newUserAccount.id,
+        username: newUserAccount.username,
+        email: newUserAccount.email,
+        firstName: newUserAccount.firstName,
+        lastName: newUserAccount.lastName,
+        createdAt: newUserAccount.createdAt,
+      };
+
+      const authToken = `jwt-token-${newUserAccount.id}-${Date.now()}`;
+
+      setUser(authenticatedUser);
+      setToken(authToken);
+      localStorage.setItem(TOKEN_KEY, authToken);
+      localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(authenticatedUser));
     } catch (error) {
-      throw new Error('Registration failed');
+      throw error;
     } finally {
       setIsLoading(false);
     }
@@ -77,8 +175,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const logout = (): void => {
     setUser(null);
     setToken(null);
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(CURRENT_USER_KEY);
   };
 
   const value: AuthContextType = {

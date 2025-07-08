@@ -72,7 +72,8 @@ const Login: React.FC = () => {
       // Redirect to intended page or dashboard
       navigate(from, { replace: true });
     } catch (error) {
-      setError('Invalid email or password. Please try again.');
+      // Display the specific error message from AuthContext
+      setError(error instanceof Error ? error.message : 'Login failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -96,7 +97,7 @@ const Login: React.FC = () => {
       // Redirect to intended page or dashboard
       navigate(from, { replace: true });
     } catch (error) {
-      setError('Demo login failed');
+      setError(error instanceof Error ? error.message : 'Demo login failed');
     } finally {
       setLoading(false);
     }
@@ -110,29 +111,45 @@ const Login: React.FC = () => {
         alignItems: 'center', 
         justifyContent: 'center',
         py: 4,
+        background: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0f0f0f 100%)',
       }}>
         <Card sx={{ 
           width: '100%', 
           maxWidth: 480,
-          boxShadow: 3,
+          backgroundColor: '#1a1a1a',
+          border: '2px solid #00ff88',
           borderRadius: 3,
+          boxShadow: `
+            0 0 20px rgba(0, 255, 136, 0.3),
+            0 0 40px rgba(0, 255, 136, 0.2),
+            0 0 60px rgba(0, 255, 136, 0.1)
+          `,
+          '&:hover': {
+            boxShadow: `
+              0 0 30px rgba(0, 255, 136, 0.4),
+              0 0 50px rgba(0, 255, 136, 0.3),
+              0 0 70px rgba(0, 255, 136, 0.2)
+            `,
+          },
         }}>
           <CardContent sx={{ p: 4 }}>
             {/* Header */}
             <Box sx={{ textAlign: 'center', mb: 4 }}>
               <Avatar sx={{ 
-                bgcolor: 'primary.main', 
+                bgcolor: '#00ff88', 
                 width: 64, 
                 height: 64, 
                 mx: 'auto', 
-                mb: 2 
+                mb: 2,
+                boxShadow: '0 0 20px rgba(0, 255, 136, 0.5)',
+                border: '2px solid #00ff88',
               }}>
-                <BankIcon sx={{ fontSize: 32 }} />
+                <BankIcon sx={{ fontSize: 32, color: '#000' }} />
               </Avatar>
-              <Typography variant="h4" component="h1" fontWeight="bold" gutterBottom>
+              <Typography variant="h4" component="h1" fontWeight="bold" gutterBottom sx={{ color: '#fff' }}>
                 Welcome Back
               </Typography>
-              <Typography variant="body1" color="text.secondary">
+              <Typography variant="body1" sx={{ color: '#00ff88' }}>
                 Sign in to your Personal Finance account
               </Typography>
             </Box>
@@ -143,20 +160,46 @@ const Login: React.FC = () => {
               variant="outlined"
               onClick={handleDemoLogin}
               disabled={loading}
-              sx={{ mb: 3, py: 1.5 }}
+              sx={{ 
+                mb: 3, 
+                py: 1.5,
+                borderColor: '#00ff88',
+                color: '#00ff88',
+                backgroundColor: 'transparent',
+                '&:hover': {
+                  borderColor: '#00ff88',
+                  backgroundColor: 'rgba(0, 255, 136, 0.1)',
+                  boxShadow: '0 0 15px rgba(0, 255, 136, 0.3)',
+                },
+                '&:disabled': {
+                  borderColor: '#666',
+                  color: '#666',
+                },
+              }}
             >
               Try Demo Account
             </Button>
 
-            <Divider sx={{ mb: 3 }}>
-              <Typography variant="body2" color="text.secondary">
+            <Divider sx={{ mb: 3, borderColor: '#333' }}>
+              <Typography variant="body2" sx={{ color: '#888' }}>
                 or sign in with email
               </Typography>
             </Divider>
 
             {/* Error Alert */}
             {error && (
-              <Alert severity="error" sx={{ mb: 3 }}>
+              <Alert 
+                severity="error" 
+                sx={{ 
+                  mb: 3,
+                  backgroundColor: 'rgba(255, 0, 0, 0.1)',
+                  border: '1px solid rgba(255, 0, 0, 0.3)',
+                  color: '#ff6b6b',
+                  '& .MuiAlert-icon': {
+                    color: '#ff6b6b',
+                  },
+                }}
+              >
                 {error}
               </Alert>
             )}
@@ -173,11 +216,33 @@ const Login: React.FC = () => {
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <EmailIcon color="action" />
+                      <EmailIcon sx={{ color: '#00ff88' }} />
                     </InputAdornment>
                   ),
                 }}
-                sx={{ mb: 3 }}
+                sx={{ 
+                  mb: 3,
+                  '& .MuiOutlinedInput-root': {
+                    backgroundColor: '#2a2a2a',
+                    color: '#fff',
+                    '& fieldset': {
+                      borderColor: '#555',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: '#00ff88',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: '#00ff88',
+                      boxShadow: '0 0 10px rgba(0, 255, 136, 0.3)',
+                    },
+                  },
+                  '& .MuiInputLabel-root': {
+                    color: '#888',
+                    '&.Mui-focused': {
+                      color: '#00ff88',
+                    },
+                  },
+                }}
                 autoComplete="email"
               />
 
@@ -191,7 +256,7 @@ const Login: React.FC = () => {
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <LockIcon color="action" />
+                      <LockIcon sx={{ color: '#00ff88' }} />
                     </InputAdornment>
                   ),
                   endAdornment: (
@@ -199,13 +264,36 @@ const Login: React.FC = () => {
                       <IconButton
                         onClick={() => setShowPassword(!showPassword)}
                         edge="end"
+                        sx={{ color: '#00ff88' }}
                       >
                         {showPassword ? <VisibilityOff /> : <Visibility />}
                       </IconButton>
                     </InputAdornment>
                   ),
                 }}
-                sx={{ mb: 2 }}
+                sx={{ 
+                  mb: 2,
+                  '& .MuiOutlinedInput-root': {
+                    backgroundColor: '#2a2a2a',
+                    color: '#fff',
+                    '& fieldset': {
+                      borderColor: '#555',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: '#00ff88',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: '#00ff88',
+                      boxShadow: '0 0 10px rgba(0, 255, 136, 0.3)',
+                    },
+                  },
+                  '& .MuiInputLabel-root': {
+                    color: '#888',
+                    '&.Mui-focused': {
+                      color: '#00ff88',
+                    },
+                  },
+                }}
                 autoComplete="current-password"
               />
 
@@ -216,15 +304,31 @@ const Login: React.FC = () => {
                       checked={formData.rememberMe}
                       onChange={(e) => setFormData({ ...formData, rememberMe: e.target.checked })}
                       disabled={loading}
+                      sx={{
+                        color: '#555',
+                        '&.Mui-checked': {
+                          color: '#00ff88',
+                        },
+                        '&:hover': {
+                          backgroundColor: 'rgba(0, 255, 136, 0.1)',
+                        },
+                      }}
                     />
                   }
-                  label="Remember me"
+                  label={<Typography sx={{ color: '#ccc' }}>Remember me</Typography>}
                 />
                 <Link
                   component={RouterLink}
                   to="/forgot-password"
                   variant="body2"
-                  color="primary"
+                  sx={{
+                    color: '#00ff88',
+                    textDecoration: 'none',
+                    '&:hover': {
+                      textDecoration: 'underline',
+                      textShadow: '0 0 5px rgba(0, 255, 136, 0.5)',
+                    },
+                  }}
                 >
                   Forgot password?
                 </Link>
@@ -239,10 +343,21 @@ const Login: React.FC = () => {
                   py: 1.5, 
                   mb: 3,
                   position: 'relative',
+                  backgroundColor: '#00ff88',
+                  color: '#000',
+                  fontWeight: 'bold',
+                  '&:hover': {
+                    backgroundColor: '#00cc6a',
+                    boxShadow: '0 0 25px rgba(0, 255, 136, 0.5)',
+                  },
+                  '&:disabled': {
+                    backgroundColor: '#555',
+                    color: '#888',
+                  },
                 }}
               >
                 {loading ? (
-                  <CircularProgress size={24} color="inherit" />
+                  <CircularProgress size={24} sx={{ color: '#000' }} />
                 ) : (
                   'Sign In'
                 )}
@@ -250,8 +365,8 @@ const Login: React.FC = () => {
             </Box>
 
             {/* Social Login */}
-            <Divider sx={{ mb: 3 }}>
-              <Typography variant="body2" color="text.secondary">
+            <Divider sx={{ mb: 3, borderColor: '#333' }}>
+              <Typography variant="body2" sx={{ color: '#888' }}>
                 or continue with
               </Typography>
             </Divider>
@@ -263,6 +378,15 @@ const Login: React.FC = () => {
                 startIcon={<GoogleIcon />}
                 onClick={() => handleSocialLogin('Google')}
                 disabled={loading}
+                sx={{
+                  borderColor: '#555',
+                  color: '#ccc',
+                  '&:hover': {
+                    borderColor: '#00ff88',
+                    backgroundColor: 'rgba(0, 255, 136, 0.1)',
+                    color: '#00ff88',
+                  },
+                }}
               >
                 Google
               </Button>
@@ -272,6 +396,15 @@ const Login: React.FC = () => {
                 startIcon={<FacebookIcon />}
                 onClick={() => handleSocialLogin('Facebook')}
                 disabled={loading}
+                sx={{
+                  borderColor: '#555',
+                  color: '#ccc',
+                  '&:hover': {
+                    borderColor: '#00ff88',
+                    backgroundColor: 'rgba(0, 255, 136, 0.1)',
+                    color: '#00ff88',
+                  },
+                }}
               >
                 Facebook
               </Button>
@@ -281,6 +414,15 @@ const Login: React.FC = () => {
                 startIcon={<AppleIcon />}
                 onClick={() => handleSocialLogin('Apple')}
                 disabled={loading}
+                sx={{
+                  borderColor: '#555',
+                  color: '#ccc',
+                  '&:hover': {
+                    borderColor: '#00ff88',
+                    backgroundColor: 'rgba(0, 255, 136, 0.1)',
+                    color: '#00ff88',
+                  },
+                }}
               >
                 Apple
               </Button>
@@ -288,13 +430,20 @@ const Login: React.FC = () => {
 
             {/* Sign Up Link */}
             <Box sx={{ textAlign: 'center' }}>
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" sx={{ color: '#888' }}>
                 Don't have an account?{' '}
                 <Link
                   component={RouterLink}
                   to="/signup"
-                  color="primary"
-                  fontWeight="medium"
+                  sx={{
+                    color: '#00ff88',
+                    fontWeight: 'medium',
+                    textDecoration: 'none',
+                    '&:hover': {
+                      textDecoration: 'underline',
+                      textShadow: '0 0 5px rgba(0, 255, 136, 0.5)',
+                    },
+                  }}
                 >
                   Sign up for free
                 </Link>

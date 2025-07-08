@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link as RouterLink } from 'react-router-dom';
 import {
   Box,
   Container,
@@ -12,6 +12,7 @@ import {
   Divider,
   IconButton,
   InputAdornment,
+  Link,
 } from '@mui/material';
 import { Visibility, VisibilityOff, Google, GitHub } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
@@ -144,7 +145,8 @@ const Signup: React.FC = () => {
       // Redirect to intended page or dashboard after successful registration
       navigate(from, { replace: true });
     } catch (error) {
-      setErrors({ general: 'Registration failed. Please try again.' });
+      // Display the specific error message from AuthContext
+      setErrors({ general: error instanceof Error ? error.message : 'Registration failed. Please try again.' });
     }
   };
 
@@ -162,6 +164,7 @@ const Signup: React.FC = () => {
           flexDirection: 'column',
           justifyContent: 'center',
           py: 4,
+          background: 'linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0f0f0f 100%)',
         }}
       >
         <Paper
@@ -171,17 +174,44 @@ const Signup: React.FC = () => {
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
+            backgroundColor: '#1a1a1a',
+            border: '2px solid #00ff88',
+            borderRadius: 3,
+            boxShadow: `
+              0 0 20px rgba(0, 255, 136, 0.3),
+              0 0 40px rgba(0, 255, 136, 0.2),
+              0 0 60px rgba(0, 255, 136, 0.1)
+            `,
+            '&:hover': {
+              boxShadow: `
+                0 0 30px rgba(0, 255, 136, 0.4),
+                0 0 50px rgba(0, 255, 136, 0.3),
+                0 0 70px rgba(0, 255, 136, 0.2)
+              `,
+            },
           }}
         >
-          <Typography component="h1" variant="h4" gutterBottom>
+          <Typography component="h1" variant="h4" gutterBottom sx={{ color: '#fff', fontWeight: 'bold' }}>
             Create Account
           </Typography>
-          <Typography variant="body2" color="text.secondary" align="center" sx={{ mb: 3 }}>
+          <Typography variant="body2" align="center" sx={{ mb: 3, color: '#00ff88' }}>
             Join Personal Finance Regulator to start managing your finances
           </Typography>
 
           {errors.general && (
-            <Alert severity="error" sx={{ width: '100%', mb: 2 }}>
+            <Alert 
+              severity="error" 
+              sx={{ 
+                width: '100%', 
+                mb: 2,
+                backgroundColor: 'rgba(255, 0, 0, 0.1)',
+                border: '1px solid rgba(255, 0, 0, 0.3)',
+                color: '#ff6b6b',
+                '& .MuiAlert-icon': {
+                  color: '#ff6b6b',
+                },
+              }}
+            >
               {errors.general}
             </Alert>
           )}
@@ -197,6 +227,37 @@ const Signup: React.FC = () => {
                 error={!!errors.firstName}
                 helperText={errors.firstName}
                 disabled={isLoading}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    backgroundColor: '#2a2a2a',
+                    color: '#fff',
+                    '& fieldset': {
+                      borderColor: '#555',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: '#00ff88',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: '#00ff88',
+                      boxShadow: '0 0 10px rgba(0, 255, 136, 0.3)',
+                    },
+                    '&.Mui-error fieldset': {
+                      borderColor: '#ff6b6b',
+                    },
+                  },
+                  '& .MuiInputLabel-root': {
+                    color: '#888',
+                    '&.Mui-focused': {
+                      color: '#00ff88',
+                    },
+                    '&.Mui-error': {
+                      color: '#ff6b6b',
+                    },
+                  },
+                  '& .MuiFormHelperText-root': {
+                    color: '#ff6b6b',
+                  },
+                }}
               />
               <TextField
                 name="lastName"
@@ -207,6 +268,37 @@ const Signup: React.FC = () => {
                 error={!!errors.lastName}
                 helperText={errors.lastName}
                 disabled={isLoading}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    backgroundColor: '#2a2a2a',
+                    color: '#fff',
+                    '& fieldset': {
+                      borderColor: '#555',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: '#00ff88',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: '#00ff88',
+                      boxShadow: '0 0 10px rgba(0, 255, 136, 0.3)',
+                    },
+                    '&.Mui-error fieldset': {
+                      borderColor: '#ff6b6b',
+                    },
+                  },
+                  '& .MuiInputLabel-root': {
+                    color: '#888',
+                    '&.Mui-focused': {
+                      color: '#00ff88',
+                    },
+                    '&.Mui-error': {
+                      color: '#ff6b6b',
+                    },
+                  },
+                  '& .MuiFormHelperText-root': {
+                    color: '#ff6b6b',
+                  },
+                }}
               />
             </Box>
             
@@ -219,7 +311,38 @@ const Signup: React.FC = () => {
               error={!!errors.username}
               helperText={errors.username}
               disabled={isLoading}
-              sx={{ mb: 2 }}
+              sx={{ 
+                mb: 2,
+                '& .MuiOutlinedInput-root': {
+                  backgroundColor: '#2a2a2a',
+                  color: '#fff',
+                  '& fieldset': {
+                    borderColor: '#555',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: '#00ff88',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#00ff88',
+                    boxShadow: '0 0 10px rgba(0, 255, 136, 0.3)',
+                  },
+                  '&.Mui-error fieldset': {
+                    borderColor: '#ff6b6b',
+                  },
+                },
+                '& .MuiInputLabel-root': {
+                  color: '#888',
+                  '&.Mui-focused': {
+                    color: '#00ff88',
+                  },
+                  '&.Mui-error': {
+                    color: '#ff6b6b',
+                  },
+                },
+                '& .MuiFormHelperText-root': {
+                  color: '#ff6b6b',
+                },
+              }}
             />
             
             <TextField
@@ -232,7 +355,38 @@ const Signup: React.FC = () => {
               error={!!errors.email}
               helperText={errors.email}
               disabled={isLoading}
-              sx={{ mb: 2 }}
+              sx={{ 
+                mb: 2,
+                '& .MuiOutlinedInput-root': {
+                  backgroundColor: '#2a2a2a',
+                  color: '#fff',
+                  '& fieldset': {
+                    borderColor: '#555',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: '#00ff88',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#00ff88',
+                    boxShadow: '0 0 10px rgba(0, 255, 136, 0.3)',
+                  },
+                  '&.Mui-error fieldset': {
+                    borderColor: '#ff6b6b',
+                  },
+                },
+                '& .MuiInputLabel-root': {
+                  color: '#888',
+                  '&.Mui-focused': {
+                    color: '#00ff88',
+                  },
+                  '&.Mui-error': {
+                    color: '#ff6b6b',
+                  },
+                },
+                '& .MuiFormHelperText-root': {
+                  color: '#ff6b6b',
+                },
+              }}
             />
             
             <TextField
@@ -245,13 +399,45 @@ const Signup: React.FC = () => {
               error={!!errors.password}
               helperText={errors.password}
               disabled={isLoading}
-              sx={{ mb: 2 }}
+              sx={{ 
+                mb: 2,
+                '& .MuiOutlinedInput-root': {
+                  backgroundColor: '#2a2a2a',
+                  color: '#fff',
+                  '& fieldset': {
+                    borderColor: '#555',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: '#00ff88',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#00ff88',
+                    boxShadow: '0 0 10px rgba(0, 255, 136, 0.3)',
+                  },
+                  '&.Mui-error fieldset': {
+                    borderColor: '#ff6b6b',
+                  },
+                },
+                '& .MuiInputLabel-root': {
+                  color: '#888',
+                  '&.Mui-focused': {
+                    color: '#00ff88',
+                  },
+                  '&.Mui-error': {
+                    color: '#ff6b6b',
+                  },
+                },
+                '& .MuiFormHelperText-root': {
+                  color: '#ff6b6b',
+                },
+              }}
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
                     <IconButton
                       onClick={() => setShowPassword(!showPassword)}
                       edge="end"
+                      sx={{ color: '#00ff88' }}
                     >
                       {showPassword ? <VisibilityOff /> : <Visibility />}
                     </IconButton>
@@ -270,13 +456,45 @@ const Signup: React.FC = () => {
               error={!!errors.confirmPassword}
               helperText={errors.confirmPassword}
               disabled={isLoading}
-              sx={{ mb: 2 }}
+              sx={{ 
+                mb: 2,
+                '& .MuiOutlinedInput-root': {
+                  backgroundColor: '#2a2a2a',
+                  color: '#fff',
+                  '& fieldset': {
+                    borderColor: '#555',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: '#00ff88',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#00ff88',
+                    boxShadow: '0 0 10px rgba(0, 255, 136, 0.3)',
+                  },
+                  '&.Mui-error fieldset': {
+                    borderColor: '#ff6b6b',
+                  },
+                },
+                '& .MuiInputLabel-root': {
+                  color: '#888',
+                  '&.Mui-focused': {
+                    color: '#00ff88',
+                  },
+                  '&.Mui-error': {
+                    color: '#ff6b6b',
+                  },
+                },
+                '& .MuiFormHelperText-root': {
+                  color: '#ff6b6b',
+                },
+              }}
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
                     <IconButton
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                       edge="end"
+                      sx={{ color: '#00ff88' }}
                     >
                       {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
                     </IconButton>
@@ -291,13 +509,28 @@ const Signup: React.FC = () => {
               variant="contained"
               size="large"
               disabled={isLoading}
-              sx={{ mt: 3, mb: 2 }}
+              sx={{ 
+                mt: 3, 
+                mb: 2,
+                py: 1.5,
+                backgroundColor: '#00ff88',
+                color: '#000',
+                fontWeight: 'bold',
+                '&:hover': {
+                  backgroundColor: '#00cc6a',
+                  boxShadow: '0 0 25px rgba(0, 255, 136, 0.5)',
+                },
+                '&:disabled': {
+                  backgroundColor: '#555',
+                  color: '#888',
+                },
+              }}
             >
-              {isLoading ? <CircularProgress size={24} /> : 'Create Account'}
+              {isLoading ? <CircularProgress size={24} sx={{ color: '#000' }} /> : 'Create Account'}
             </Button>
 
-            <Divider sx={{ my: 2 }}>
-              <Typography variant="body2" color="text.secondary">
+            <Divider sx={{ my: 2, borderColor: '#333' }}>
+              <Typography variant="body2" sx={{ color: '#888' }}>
                 or sign up with
               </Typography>
             </Divider>
@@ -309,6 +542,15 @@ const Signup: React.FC = () => {
                 startIcon={<Google />}
                 onClick={() => handleSocialSignup('Google')}
                 disabled={isLoading}
+                sx={{
+                  borderColor: '#555',
+                  color: '#ccc',
+                  '&:hover': {
+                    borderColor: '#00ff88',
+                    backgroundColor: 'rgba(0, 255, 136, 0.1)',
+                    color: '#00ff88',
+                  },
+                }}
               >
                 Google
               </Button>
@@ -318,20 +560,34 @@ const Signup: React.FC = () => {
                 startIcon={<GitHub />}
                 onClick={() => handleSocialSignup('GitHub')}
                 disabled={isLoading}
+                sx={{
+                  borderColor: '#555',
+                  color: '#ccc',
+                  '&:hover': {
+                    borderColor: '#00ff88',
+                    backgroundColor: 'rgba(0, 255, 136, 0.1)',
+                    color: '#00ff88',
+                  },
+                }}
               >
                 GitHub
               </Button>
             </Box>
 
             <Box sx={{ textAlign: 'center' }}>
-              <Typography variant="body2">
+              <Typography variant="body2" sx={{ color: '#888' }}>
                 Already have an account?{' '}
                 <Link 
+                  component={RouterLink}
                   to="/login" 
-                  style={{ 
+                  sx={{
+                    color: '#00ff88',
+                    fontWeight: 'medium',
                     textDecoration: 'none',
-                    color: 'primary.main',
-                    fontWeight: 'medium'
+                    '&:hover': {
+                      textDecoration: 'underline',
+                      textShadow: '0 0 5px rgba(0, 255, 136, 0.5)',
+                    },
                   }}
                 >
                   Sign in here
