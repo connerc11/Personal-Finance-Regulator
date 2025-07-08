@@ -1,0 +1,39 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: user-service
+  datasource:
+    url: jdbc:h2:mem:userdb
+    driverClassName: org.h2.Driver
+    username: sa
+    password: password
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: create-drop
+    database-platform: org.hibernate.dialect.H2Dialect
+
+jwt:
+  secret: mySecretKey
+  expiration: 86400000 # 24 hours
+
+personalfinance:
+  app:
+    jwtSecret: personalFinanceSecretKey
+    jwtExpirationMs: 86400000
+
+logging:
+  level:
+    com.personalfinance.user: DEBUG
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
