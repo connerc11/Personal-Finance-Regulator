@@ -27,6 +27,7 @@
         <module>transaction-service</module>
         <module>budget-service</module>
         <module>scheduled-purchase-service</module>
+        <module>analytics-service</module>
     </modules>
 
     <dependencyManagement>
