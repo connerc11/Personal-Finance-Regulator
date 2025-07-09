@@ -14,7 +14,6 @@ import {
   IconButton,
   FormControlLabel,
   Checkbox,
-  Paper,
   Avatar,
   Container,
   CircularProgress,
@@ -34,7 +33,7 @@ import { useAuth } from '../contexts/AuthContext';
 const Login: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, isLoading } = useAuth();
+  const { login } = useAuth();
   
   // Get the intended destination from location state
   const from = location.state?.from?.pathname || '/dashboard';

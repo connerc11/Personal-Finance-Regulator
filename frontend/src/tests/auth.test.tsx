@@ -281,9 +281,9 @@ describe('Authentication Flow', () => {
         </TestWrapper>
       );
 
-      // Should show authenticated content
+      // Should show authenticated content (financial setup form for non-demo users)
       await waitFor(() => {
-        expect(screen.getByText(/welcome back, test/i)).toBeInTheDocument();
+        expect(screen.getByText(/set up your financial profile/i)).toBeInTheDocument();
       });
 
       // Click logout in user menu
@@ -333,9 +333,9 @@ describe('Authentication Flow', () => {
         </TestWrapper>
       );
 
-      // Should show dashboard for authenticated users
+      // Should show dashboard for authenticated users (financial setup form for non-demo users)
       await waitFor(() => {
-        expect(screen.getByText(/welcome back, test/i)).toBeInTheDocument();
+        expect(screen.getByText(/set up your financial profile/i)).toBeInTheDocument();
       });
     });
 
@@ -358,9 +358,9 @@ describe('Authentication Flow', () => {
         </TestWrapper>
       );
 
-      // Should maintain state across re-renders
+      // Should maintain state across re-renders (financial setup form for non-demo users)
       await waitFor(() => {
-        expect(screen.getByText(/welcome back, test/i)).toBeInTheDocument();
+        expect(screen.getByText(/set up your financial profile/i)).toBeInTheDocument();
       });
 
       rerender(
@@ -370,7 +370,32 @@ describe('Authentication Flow', () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByText(/welcome back, test/i)).toBeInTheDocument();
+        expect(screen.getByText(/set up your financial profile/i)).toBeInTheDocument();
+      });
+    });
+
+    test('should show demo dashboard for demo users', async () => {
+      // Set up demo user authenticated state
+      const demoUser = {
+        id: 1,
+        username: 'demo',
+        email: 'demo@personalfinance.com',
+        firstName: 'Demo',
+        lastName: 'User',
+        createdAt: new Date().toISOString(),
+      };
+      localStorage.setItem('personalfinance_current_user', JSON.stringify(demoUser));
+      localStorage.setItem('personalfinance_token', 'mock-token');
+
+      render(
+        <TestWrapper>
+          <Dashboard />
+        </TestWrapper>
+      );
+
+      // Should show welcome message for demo users
+      await waitFor(() => {
+        expect(screen.getByText(/welcome back, demo/i)).toBeInTheDocument();
       });
     });
   });
