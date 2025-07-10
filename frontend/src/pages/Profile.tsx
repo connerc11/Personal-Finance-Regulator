@@ -52,6 +52,11 @@ import { useAuth } from '../contexts/AuthContext';
 import { User } from '../types';
 import { userAPI } from '../services/apiService';
 
+// Constants for localStorage keys
+const PREFERENCES_KEY = 'personal_finance_preferences';
+const TRANSACTIONS_KEY = 'personal_finance_transactions';
+const BUDGETS_KEY = 'personal_finance_budgets';
+
 interface UserPreferences {
   notifications: {
     email: boolean;
@@ -109,7 +114,7 @@ const Profile: React.FC = () => {
     confirm: false,
   });
 
-  // Preferences
+  // User-specific preferences
   const [preferences, setPreferences] = useState<UserPreferences>({
     notifications: {
       email: true,
@@ -129,15 +134,16 @@ const Profile: React.FC = () => {
     },
   });
 
-  // Mock account stats (in real app, fetch from API)
-  const [accountStats] = useState<AccountStats>({
-    totalTransactions: 156,
-    totalBudgets: 8,
-    totalScheduled: 12,
-    accountAge: 245, // days
-    lastLogin: '2025-07-08T10:30:00Z',
+  // User-specific account stats (calculated from real data)
+  const [accountStats, setAccountStats] = useState<AccountStats>({
+    totalTransactions: 0,
+    totalBudgets: 0,
+    totalScheduled: 0,
+    accountAge: 0,
+    lastLogin: new Date().toISOString(),
   });
 
+  // Load user-specific data from localStorage
   useEffect(() => {
     if (authUser) {
       setUser(authUser);
@@ -147,9 +153,121 @@ const Profile: React.FC = () => {
         email: authUser.email || '',
         username: authUser.username || '',
       });
+
+      // Load user-specific preferences
+      loadUserPreferences();
+      
+      // Calculate account stats from real data
+      calculateAccountStats();
     }
   }, [authUser]);
 
+  const loadUserPreferences = () => {
+    if (!authUser) return;
+
+    try {
+      const storedPreferences = localStorage.getItem(`${PREFERENCES_KEY}_${authUser.id}`);
+      if (storedPreferences) {
+        const parsedPreferences = JSON.parse(storedPreferences);
+        setPreferences(parsedPreferences);
+      }
+    } catch (error) {
+      console.error('Failed to load user preferences:', error);
+    }
+  };
+
+  const saveUserPreferences = (newPreferences: UserPreferences) => {
+    if (!authUser) return;
+
+    try {
+      localStorage.setItem(`${PREFERENCES_KEY}_${authUser.id}`, JSON.stringify(newPreferences));
+      setPreferences(newPreferences);
+    } catch (error) {
+      console.error('Failed to save user preferences:', error);
+      setError('Failed to save preferences');
+    }
+  };
+
+  const calculateAccountStats = () => {
+    if (!authUser) return;
+
+    try {
+      // Get user transactions
+      const storedTransactions = localStorage.getItem(`${TRANSACTIONS_KEY}_${authUser.id}`);
+      const transactions = storedTransactions ? JSON.parse(storedTransactions) : [];
+
+      // Get user budgets
+      const storedBudgets = localStorage.getItem(`${BUDGETS_KEY}_${authUser.id}`);
+      const budgets = storedBudgets ? JSON.parse(storedBudgets) : [];
+
+      // Calculate account age in days
+      const createdAt = new Date(authUser.createdAt);
+      const now = new Date();
+      const accountAge = Math.floor((now.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24));
+
+      // For scheduled purchases, we'll use a simple estimate based on recurring transactions
+      const recurringTransactions = transactions.filter((t: any) => 
+        t.description?.toLowerCase().includes('subscription') || 
+        t.description?.toLowerCase().includes('recurring') ||
+        t.description?.toLowerCase().includes('monthly')
+      );
+
+      setAccountStats({
+        totalTransactions: transactions.length,
+        totalBudgets: budgets.length,
+        totalScheduled: recurringTransactions.length,
+        accountAge: Math.max(accountAge, 0),
+        lastLogin: authUser.lastLoginAt || new Date().toISOString(),
+      });
+    } catch (error) {
+      console.error('Failed to calculate account stats:', error);
+    }
+  };
+
+  const getRecentActivity = () => {
+    if (!authUser) return [];
+
+    const activities: { description: string; time: string }[] = [];
+
+    try {
+      // Get recent transactions (last 5)
+      const storedTransactions = localStorage.getItem(`${TRANSACTIONS_KEY}_${authUser.id}`);
+      const transactions = storedTransactions ? JSON.parse(storedTransactions) : [];
+      
+      const recentTransactions = transactions
+        .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        .slice(0, 3);
+
+      recentTransactions.forEach((transaction: any) => {
+        activities.push({
+          description: `${transaction.type === 'income' ? 'Received' : 'Spent'} $${Math.abs(transaction.amount)} - ${transaction.description}`,
+          time: new Date(transaction.date).toLocaleDateString(),
+        });
+      });
+
+      // Get recent budgets (last 2)
+      const storedBudgets = localStorage.getItem(`${BUDGETS_KEY}_${authUser.id}`);
+      const budgets = storedBudgets ? JSON.parse(storedBudgets) : [];
+      
+      const recentBudgets = budgets
+        .sort((a: any, b: any) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
+        .slice(0, 2);
+
+      recentBudgets.forEach((budget: any) => {
+        activities.push({
+          description: `Created budget for '${budget.category}' - $${budget.amount}`,
+          time: budget.createdAt ? new Date(budget.createdAt).toLocaleDateString() : 'Recently',
+        });
+      });
+
+    } catch (error) {
+      console.error('Failed to get recent activity:', error);
+    }
+
+    return activities.slice(0, 5); // Return max 5 activities
+  };
+
+  // Load user profile data
   const loadUserProfile = async () => {
     try {
       setLoading(true);
@@ -267,13 +385,16 @@ const Profile: React.FC = () => {
   };
 
   const handlePreferenceChange = (category: keyof UserPreferences, key: string, value: any) => {
-    setPreferences(prev => ({
-      ...prev,
+    const newPreferences = {
+      ...preferences,
       [category]: {
-        ...prev[category],
+        ...preferences[category],
         [key]: value,
       },
-    }));
+    };
+    
+    // Save to localStorage immediately
+    saveUserPreferences(newPreferences);
   };
 
   const getInitials = (firstName: string, lastName: string) => {
@@ -736,35 +857,39 @@ const Profile: React.FC = () => {
               <Typography variant="h6" gutterBottom>
                 Recent Activity
               </Typography>
-              <List>
-                <ListItem>
-                  <ListItemIcon>
-                    <CheckCircleIcon color="success" />
-                  </ListItemIcon>
-                  <ListItemText
-                    primary="Profile updated"
-                    secondary="2 hours ago"
-                  />
-                </ListItem>
-                <ListItem>
-                  <ListItemIcon>
-                    <CheckCircleIcon color="success" />
-                  </ListItemIcon>
-                  <ListItemText
-                    primary="Budget created for 'Entertainment'"
-                    secondary="1 day ago"
-                  />
-                </ListItem>
-                <ListItem>
-                  <ListItemIcon>
-                    <CheckCircleIcon color="success" />
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={`Last login: ${new Date(accountStats.lastLogin).toLocaleDateString()}`}
-                    secondary={new Date(accountStats.lastLogin).toLocaleTimeString()}
-                  />
-                </ListItem>
-              </List>
+              {getRecentActivity().length === 0 ? (
+                <Box sx={{ textAlign: 'center', py: 4 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    No recent activity to display
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Start by creating transactions or budgets
+                  </Typography>
+                </Box>
+              ) : (
+                <List>
+                  {getRecentActivity().map((activity, index) => (
+                    <ListItem key={index}>
+                      <ListItemIcon>
+                        <CheckCircleIcon color="success" />
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={activity.description}
+                        secondary={activity.time}
+                      />
+                    </ListItem>
+                  ))}
+                  <ListItem>
+                    <ListItemIcon>
+                      <CheckCircleIcon color="info" />
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={`Last login: ${new Date(accountStats.lastLogin).toLocaleDateString()}`}
+                      secondary={new Date(accountStats.lastLogin).toLocaleTimeString()}
+                    />
+                  </ListItem>
+                </List>
+              )}
             </CardContent>
           </Card>
         </>
@@ -844,3 +969,6 @@ const Profile: React.FC = () => {
 };
 
 export default Profile;
+
+// Module export to prevent TS1208 isolatedModules warnings
+export {};

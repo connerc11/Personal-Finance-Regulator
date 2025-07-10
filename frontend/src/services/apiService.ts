@@ -1,5 +1,6 @@
 import axios from 'axios';
-import { ApiResponse, User, Transaction, Budget, ScheduledPurchase } from '../types';
+import { ApiResponse, User, Transaction, Budget, ScheduledPurchase, FinancialGoal } from '../types';
+import { mockGoalsAPI } from './mockGoalsAPI';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
 
@@ -166,6 +167,63 @@ export const scheduledPurchaseAPI = {
   getUpcoming: async (days: number = 30): Promise<ApiResponse<ScheduledPurchase[]>> => {
     const response = await apiClient.get(`/scheduled-purchases/upcoming?days=${days}`);
     return response.data;
+  },
+};
+
+// Goals API - Using mock for now until backend is implemented
+export const goalsAPI = {
+  getAll: async (): Promise<ApiResponse<FinancialGoal[]>> => {
+    // For now, use mock API. Replace with real API calls when backend is ready
+    return mockGoalsAPI.getAll();
+    
+    // Real API implementation (uncomment when backend is ready):
+    // const response = await apiClient.get('/goals');
+    // return response.data;
+  },
+  
+  create: async (goal: Omit<FinancialGoal, 'id' | 'createdAt' | 'progress' | 'monthlySavingsNeeded'>): Promise<ApiResponse<FinancialGoal>> => {
+    // For now, use mock API. Replace with real API calls when backend is ready
+    return mockGoalsAPI.create(goal);
+    
+    // Real API implementation (uncomment when backend is ready):
+    // const response = await apiClient.post('/goals', goal);
+    // return response.data;
+  },
+  
+  update: async (id: number, goal: Partial<FinancialGoal>): Promise<ApiResponse<FinancialGoal>> => {
+    // For now, use mock API. Replace with real API calls when backend is ready
+    return mockGoalsAPI.update(id, goal);
+    
+    // Real API implementation (uncomment when backend is ready):
+    // const response = await apiClient.put(`/goals/${id}`, goal);
+    // return response.data;
+  },
+  
+  delete: async (id: number): Promise<ApiResponse<void>> => {
+    // For now, use mock API. Replace with real API calls when backend is ready
+    return mockGoalsAPI.delete(id);
+    
+    // Real API implementation (uncomment when backend is ready):
+    // const response = await apiClient.delete(`/goals/${id}`);
+    // return response.data;
+  },
+  
+  updateProgress: async (id: number, currentAmount: number): Promise<ApiResponse<FinancialGoal>> => {
+    // For now, use mock API. Replace with real API calls when backend is ready
+    return mockGoalsAPI.updateProgress(id, currentAmount);
+    
+    // Real API implementation (uncomment when backend is ready):
+    // const response = await apiClient.patch(`/goals/${id}/progress`, { currentAmount });
+    // return response.data;
+  },
+  
+  markCompleted: async (id: number): Promise<ApiResponse<FinancialGoal>> => {
+    // For now, use mock API. Replace with real API calls when backend is ready
+    return mockGoalsAPI.markCompleted(id);
+    
+    // Real API implementation (uncomment when backend is ready):
+    // const response = await apiClient.patch(`/goals/${id}/complete`);
+    // return response.data;
   },
 };
 
