@@ -115,7 +115,15 @@ const Analytics: React.FC = () => {
     );
   }
 
-  if (!analyticsData) {
+  // Check if user has no financial data
+  const hasNoData = !analyticsData || (
+    analyticsData.totalIncome === 0 && 
+    analyticsData.totalExpenses === 0 && 
+    analyticsData.monthlyTrend.length === 0 &&
+    analyticsData.categoryBreakdown.length === 0
+  );
+
+  if (hasNoData) {
     return (
       <Box sx={{ p: 3 }}>
         <Card

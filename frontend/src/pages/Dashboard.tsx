@@ -37,11 +37,8 @@ const Dashboard: React.FC = () => {
   const [userFinancialData, setUserFinancialData] = useState<FinancialData | null>(null);
   const [showSetupForm, setShowSetupForm] = useState(false);
 
-  // Check if user is demo account
-  const isDemoUser = user?.email === 'demo@personalfinance.com';
-
   useEffect(() => {
-    if (!isDemoUser && user) {
+    if (user) {
       // Load user's financial data from localStorage
       const storedData = localStorage.getItem(`${FINANCIAL_DATA_KEY}_${user.id}`);
       if (storedData) {
@@ -50,7 +47,7 @@ const Dashboard: React.FC = () => {
         setShowSetupForm(true);
       }
     }
-  }, [user, isDemoUser]);
+  }, [user]);
 
   const handleSaveFinancialData = (data: FinancialData) => {
     if (user) {
@@ -60,14 +57,6 @@ const Dashboard: React.FC = () => {
       setShowSetupForm(false);
     }
   };
-
-  // Demo data for demo users
-  const demoStats = [
-    { title: 'Total Balance', value: '$12,450.00', icon: <AccountBalance />, color: 'primary' },
-    { title: 'Monthly Income', value: '$5,200.00', icon: <TrendingUp />, color: 'success' },
-    { title: 'Monthly Expenses', value: '$3,180.00', icon: <TrendingDown />, color: 'error' },
-    { title: 'Active Budgets', value: '8', icon: <CreditCard />, color: 'info' },
-  ];
 
   // Calculate stats from user's financial data
   const calculateUserStats = (data: FinancialData) => {
@@ -84,10 +73,10 @@ const Dashboard: React.FC = () => {
     ];
   };
 
-  const stats = isDemoUser ? demoStats : (userFinancialData ? calculateUserStats(userFinancialData) : []);
+  const stats = userFinancialData ? calculateUserStats(userFinancialData) : [];
 
-  // If non-demo user needs to set up financial data
-  if (!isDemoUser && showSetupForm) {
+  // If user needs to set up financial data
+  if (showSetupForm) {
     return (
       <Box>
         <FinancialDataForm onSave={handleSaveFinancialData} />
@@ -118,10 +107,7 @@ const Dashboard: React.FC = () => {
           color: '#888',
         }}
       >
-        {isDemoUser 
-          ? "Here's your demo financial overview for today" 
-          : "Here's your financial overview for today"
-        }
+        Here's your financial overview for today
       </Typography>
       
       {stats.length > 0 && (
@@ -200,7 +186,7 @@ const Dashboard: React.FC = () => {
                 fontWeight: 'bold',
               }}
             >
-              {isDemoUser ? 'Recent Transactions (Demo)' : 'Recent Transactions'}
+              Recent Transactions
             </Typography>
             <Typography 
               variant="body2" 
@@ -208,10 +194,7 @@ const Dashboard: React.FC = () => {
                 color: '#888',
               }}
             >
-              {isDemoUser 
-                ? 'Demo transaction history will be displayed here'
-                : 'Your transaction history will be displayed here'
-              }
+              Your transaction history will be displayed here
             </Typography>
           </Paper>
         </Box>
@@ -234,7 +217,7 @@ const Dashboard: React.FC = () => {
                 fontWeight: 'bold',
               }}
             >
-              {isDemoUser ? 'Budget Overview (Demo)' : 'Budget Overview'}
+              Budget Overview
             </Typography>
             <Typography 
               variant="body2" 
@@ -242,16 +225,13 @@ const Dashboard: React.FC = () => {
                 color: '#888',
               }}
             >
-              {isDemoUser 
-                ? 'Demo budget status will be displayed here'
-                : 'Your budget status will be displayed here'
-              }
+              Your budget status will be displayed here
             </Typography>
           </Paper>
         </Box>
       </Box>
 
-      {!isDemoUser && userFinancialData && (
+      {userFinancialData && (
         <Box sx={{ mt: 3 }}>
           <Typography variant="h6" gutterBottom sx={{ color: '#00ff88' }}>
             Want to update your financial information?

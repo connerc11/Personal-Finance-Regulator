@@ -206,3 +206,9 @@ jspm_packages/
 
 # DynamoDB Local files
 .dynamodb/
+
+# H2 Database files (persistent storage)
+data/
+*.db
+*.mv.db
+*.trace.db

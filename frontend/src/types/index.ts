@@ -34,10 +34,14 @@ export interface Transaction {
   id: number;
   description: string;
   amount: number;
-  type: 'income' | 'expense';
+  type: 'INCOME' | 'EXPENSE';
   category: string;
   date: string;
   userId: number;
+  transactionDate?: string;  // Backend uses transactionDate
+  merchant?: string;
+  location?: string;
+  notes?: string;
 }
 
 export interface Budget {
@@ -46,10 +50,29 @@ export interface Budget {
   category: string;
   amount: number;
   spent: number;
-  period: 'monthly' | 'weekly' | 'yearly';
+  period: 'WEEKLY' | 'MONTHLY' | 'YEARLY';
   startDate: string;
   endDate: string;
   userId: number;
+}
+
+export interface BudgetCreateRequest {
+  userId: number;
+  name: string;
+  category: string;
+  amount: number;
+  period: 'WEEKLY' | 'MONTHLY' | 'YEARLY';
+  startDate: string;
+  endDate: string;
+}
+
+export interface BudgetUpdateRequest {
+  name: string;
+  category: string;
+  amount: number;
+  period: 'WEEKLY' | 'MONTHLY' | 'YEARLY';
+  startDate: string;
+  endDate: string;
 }
 
 export interface ScheduledPurchase {

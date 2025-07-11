@@ -27,33 +27,10 @@ import {
 } from '@mui/material';
 import { Add, Edit, Delete, AccountBalanceWallet } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
+import { budgetAPI, transactionAPI } from '../services/apiService';
+import { Budget, Transaction, BudgetCreateRequest, BudgetUpdateRequest } from '../types';
 
-// Empty export to satisfy TypeScript isolatedModules requirement
-export {};
-
-interface Budget {
-  id: number;
-  name: string;
-  category: string;
-  amount: number;
-  spent: number;
-  period: 'monthly' | 'weekly' | 'yearly';
-  startDate: string;
-  endDate: string;
-}
-
-interface Transaction {
-  id: number;
-  description: string;
-  amount: number;
-  type: 'income' | 'expense';
-  category: string;
-  date: string;
-}
-
-// Local storage keys
-const BUDGETS_KEY = 'personalfinance_budgets';
-const TRANSACTIONS_KEY = 'personalfinance_transactions';
+// Remove localStorage usage - data comes from backend API
 
 const Budgets: React.FC = () => {
   const { user } = useAuth();
@@ -65,7 +42,7 @@ const Budgets: React.FC = () => {
     name: '',
     category: '',
     amount: '',
-    period: 'monthly' as 'monthly' | 'weekly' | 'yearly',
+    period: 'MONTHLY' as 'MONTHLY' | 'WEEKLY' | 'YEARLY',
     startDate: new Date().toISOString().split('T')[0],
     endDate: '',
   });
@@ -90,41 +67,39 @@ const Budgets: React.FC = () => {
     'Other',
   ];
 
-  // Load budgets and transactions from localStorage on component mount
+  // Load budgets and transactions from API on component mount
   useEffect(() => {
-    if (user) {
-      // Load budgets
-      const storedBudgets = localStorage.getItem(`${BUDGETS_KEY}_${user.id}`);
-      if (storedBudgets) {
+    const loadData = async () => {
+      if (user) {
         try {
-          const parsedBudgets = JSON.parse(storedBudgets);
-          setBudgets(Array.isArray(parsedBudgets) ? parsedBudgets : []);
+          // Load budgets from API
+          const budgetsResponse = await budgetAPI.getAll(user.id);
+          if (budgetsResponse.success) {
+            setBudgets(budgetsResponse.data);
+          } else {
+            setBudgets([]);
+          }
+
+          // Load transactions from API  
+          const transactionsResponse = await transactionAPI.getAll(user.id);
+          if (transactionsResponse.success) {
+            setTransactions(transactionsResponse.data);
+          } else {
+            setTransactions([]);
+          }
         } catch (error) {
-          console.error('Error parsing stored budgets:', error);
+          console.error('Error loading data:', error);
           setBudgets([]);
-        }
-      } else {
-        setBudgets([]);
-      }
-      
-      // Load transactions
-      const storedTransactions = localStorage.getItem(`${TRANSACTIONS_KEY}_${user.id}`);
-      if (storedTransactions) {
-        try {
-          const parsedTransactions = JSON.parse(storedTransactions);
-          setTransactions(Array.isArray(parsedTransactions) ? parsedTransactions : []);
-        } catch (error) {
-          console.error('Error parsing stored transactions:', error);
           setTransactions([]);
         }
       } else {
+        // Clear data if no user
+        setBudgets([]);
         setTransactions([]);
       }
-    } else {
-      // Clear data if no user
-      setBudgets([]);
-      setTransactions([]);
-    }
+    };
+
+    loadData();
   }, [user]);
 
   // Function to calculate spending for a budget based on transactions
@@ -134,10 +109,17 @@ const Budgets: React.FC = () => {
     
     return userTransactions
       .filter(transaction => {
-        const transactionDate = new Date(transaction.date);
+        // Handle both date and transactionDate fields from backend
+        const transactionDate = new Date(transaction.transactionDate || transaction.date);
+        const isExpense = transaction.type === 'EXPENSE';
+        const categoriesMatch = transaction.category.toLowerCase() === budget.category.toLowerCase() ||
+                               (transaction.category === 'GROCERIES' && budget.category === 'Groceries') ||
+                               (transaction.category === 'DINING' && budget.category === 'Food & Dining') ||
+                               (transaction.category === 'TRANSPORTATION' && budget.category === 'Transportation');
+        
         return (
-          transaction.type === 'expense' &&
-          transaction.category === budget.category &&
+          isExpense &&
+          categoriesMatch &&
           transactionDate >= startDate &&
           transactionDate <= endDate
         );
@@ -160,20 +142,11 @@ const Budgets: React.FC = () => {
       
       if (hasChanges) {
         setBudgets(updatedBudgets);
-        // Immediately save to localStorage when spending is recalculated
-        if (user) {
-          localStorage.setItem(`${BUDGETS_KEY}_${user.id}`, JSON.stringify(updatedBudgets));
-        }
       }
     }
-  }, [transactions, user]); // Include user in dependencies
+  }, [transactions]); // Removed user dependency to prevent loops
 
-  // Save budgets to localStorage whenever budgets change (separate from spending calculation)
-  useEffect(() => {
-    if (user && budgets.length > 0) {
-      localStorage.setItem(`${BUDGETS_KEY}_${user.id}`, JSON.stringify(budgets));
-    }
-  }, [budgets, user]);
+  // Budgets are now managed by backend API, no localStorage needed
 
   // Calculate end date based on period and start date
   const calculateEndDate = (startDate: string, period: string) => {
@@ -181,13 +154,13 @@ const Budgets: React.FC = () => {
     let end = new Date(start);
     
     switch (period) {
-      case 'weekly':
+      case 'WEEKLY':
         end.setDate(start.getDate() + 7);
         break;
-      case 'monthly':
+      case 'MONTHLY':
         end.setMonth(start.getMonth() + 1);
         break;
-      case 'yearly':
+      case 'YEARLY':
         end.setFullYear(start.getFullYear() + 1);
         break;
     }
@@ -203,44 +176,56 @@ const Budgets: React.FC = () => {
     }
   }, [formData.startDate, formData.period]);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     const amount = parseFloat(formData.amount);
     
-    if (!formData.name || !formData.category || !amount || amount <= 0) {
+    if (!formData.name || !formData.category || !amount || amount <= 0 || !user) {
       return; // Basic validation
     }
     
-    let updatedBudgets;
-    
-    if (editingBudget) {
-      const updatedBudget = { 
-        ...editingBudget, 
-        ...formData, 
-        amount,
-        spent: calculateSpentAmount({...editingBudget, ...formData, amount, spent: 0}, transactions)
-      };
-      updatedBudgets = budgets.map(b => 
-        b.id === editingBudget.id ? updatedBudget : b
-      );
-    } else {
-      const newBudget: Budget = {
-        id: Date.now(),
-        ...formData,
-        amount,
-        spent: 0, // Will be calculated automatically
-      };
-      updatedBudgets = [...budgets, newBudget];
+    try {
+      if (editingBudget) {
+        // Update existing budget
+        const budgetData: BudgetUpdateRequest = {
+          name: formData.name,
+          category: formData.category,
+          amount,
+          period: formData.period as 'WEEKLY' | 'MONTHLY' | 'YEARLY',
+          startDate: formData.startDate,
+          endDate: formData.endDate,
+        };
+        
+        const response = await budgetAPI.update(editingBudget.id, budgetData);
+        if (response.success) {
+          // Update local state
+          const updatedBudgets = budgets.map(b => 
+            b.id === editingBudget.id ? response.data : b
+          );
+          setBudgets(updatedBudgets);
+        }
+      } else {
+        // Create new budget
+        const budgetData: BudgetCreateRequest = {
+          userId: user.id,
+          name: formData.name,
+          category: formData.category,
+          amount,
+          period: formData.period as 'WEEKLY' | 'MONTHLY' | 'YEARLY',
+          startDate: formData.startDate,
+          endDate: formData.endDate,
+        };
+        
+        const response = await budgetAPI.create(budgetData);
+        if (response.success) {
+          // Add to local state
+          setBudgets([...budgets, response.data]);
+        }
+      }
+      
+      handleClose();
+    } catch (error) {
+      console.error('Error saving budget:', error);
     }
-    
-    // Update state
-    setBudgets(updatedBudgets);
-    
-    // Immediately save to localStorage
-    if (user) {
-      localStorage.setItem(`${BUDGETS_KEY}_${user.id}`, JSON.stringify(updatedBudgets));
-    }
-    
-    handleClose();
   };
 
   const handleClose = () => {
@@ -250,7 +235,7 @@ const Budgets: React.FC = () => {
       name: '',
       category: '',
       amount: '',
-      period: 'monthly',
+      period: 'MONTHLY',
       startDate: new Date().toISOString().split('T')[0],
       endDate: '',
     });
@@ -269,13 +254,19 @@ const Budgets: React.FC = () => {
     setOpen(true);
   };
 
-  const handleDelete = (id: number) => {
-    const updatedBudgets = budgets.filter(b => b.id !== id);
-    setBudgets(updatedBudgets);
+  const handleDelete = async (id: number) => {
+    if (!user) return;
     
-    // Immediately save to localStorage
-    if (user) {
-      localStorage.setItem(`${BUDGETS_KEY}_${user.id}`, JSON.stringify(updatedBudgets));
+    try {
+      const response = await budgetAPI.delete(id);
+      if (response.success) {
+        // Remove from local state
+        setBudgets(budgets.filter(b => b.id !== id));
+      } else {
+        console.error('Failed to delete budget:', response.message);
+      }
+    } catch (error) {
+      console.error('Error deleting budget:', error);
     }
   };
 
@@ -288,6 +279,10 @@ const Budgets: React.FC = () => {
 
   const getProgressPercentage = (spent: number, amount: number) => {
     return Math.min((spent / amount) * 100, 100);
+  };
+
+  const formatPeriodForDisplay = (period: string) => {
+    return period.toLowerCase().charAt(0).toUpperCase() + period.toLowerCase().slice(1);
   };
 
   return (
@@ -472,7 +467,7 @@ const Budgets: React.FC = () => {
                     borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
                   }}>
                     <Chip 
-                      label={budget.period} 
+                      label={formatPeriodForDisplay(budget.period)} 
                       size="small"
                       variant="outlined"
                       sx={{
@@ -730,7 +725,7 @@ const Budgets: React.FC = () => {
               <Select
                 value={formData.period}
                 label="Period"
-                onChange={(e) => setFormData({ ...formData, period: e.target.value as 'monthly' | 'weekly' | 'yearly' })}
+                onChange={(e) => setFormData({ ...formData, period: e.target.value as 'MONTHLY' | 'WEEKLY' | 'YEARLY' })}
                 MenuProps={{
                   PaperProps: {
                     sx: {
@@ -740,21 +735,21 @@ const Budgets: React.FC = () => {
                   },
                 }}
               >
-                <MenuItem value="weekly" sx={{
+                <MenuItem value="WEEKLY" sx={{
                   backgroundColor: '#1a1a1a',
                   color: '#fff',
                   '&:hover': {
                     backgroundColor: 'rgba(0, 255, 136, 0.1)',
                   },
                 }}>Weekly</MenuItem>
-                <MenuItem value="monthly" sx={{
+                <MenuItem value="MONTHLY" sx={{
                   backgroundColor: '#1a1a1a',
                   color: '#fff',
                   '&:hover': {
                     backgroundColor: 'rgba(0, 255, 136, 0.1)',
                   },
                 }}>Monthly</MenuItem>
-                <MenuItem value="yearly" sx={{
+                <MenuItem value="YEARLY" sx={{
                   backgroundColor: '#1a1a1a',
                   color: '#fff',
                   '&:hover': {
