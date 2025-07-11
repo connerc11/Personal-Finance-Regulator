@@ -26,6 +26,7 @@ import {
   ExitToApp, 
   Psychology,
   Flag,
+  Assessment,
   MoreVert as MoreVertIcon,
 } from '@mui/icons-material';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
@@ -38,6 +39,7 @@ const menuItems = [
   { text: 'Transactions', icon: <AccountBalance />, path: '/transactions' },
   { text: 'Budgets', icon: <TrendingUp />, path: '/budgets' },
   { text: 'Analytics', icon: <TrendingUp />, path: '/analytics' },
+  { text: 'Reports', icon: <Assessment />, path: '/reports' },
   { text: 'Scheduled', icon: <Schedule />, path: '/scheduled' },
   { text: 'Cash Coach', icon: <Psychology />, path: '/cash-coach' },
   { text: 'Goals', icon: <Flag />, path: '/goals' },

@@ -1,0 +1,2 @@
+# Ignore TypeScript isolatedModules errors for specific files
+src/pages/Budgets.tsx

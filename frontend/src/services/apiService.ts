@@ -1,6 +1,8 @@
 import axios from 'axios';
 import { ApiResponse, User, Transaction, Budget, ScheduledPurchase, FinancialGoal } from '../types';
 import { mockGoalsAPI } from './mockGoalsAPI';
+import { mockTransactionAPI } from './mockTransactionAPI';
+import { mockBudgetAPI } from './mockBudgetAPI';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
 
@@ -49,46 +51,78 @@ export const userAPI = {
 // Transaction API
 export const transactionAPI = {
   getAll: async (): Promise<ApiResponse<Transaction[]>> => {
-    const response = await apiClient.get('/transactions');
-    return response.data;
+    // For now, use mock API. Replace with real API calls when backend is ready
+    return mockTransactionAPI.getAll();
+    
+    // Real API implementation (uncomment when backend is ready):
+    // const response = await apiClient.get('/transactions');
+    // return response.data;
   },
   
   create: async (transaction: Omit<Transaction, 'id'>): Promise<ApiResponse<Transaction>> => {
-    const response = await apiClient.post('/transactions', transaction);
-    return response.data;
+    // For now, use mock API. Replace with real API calls when backend is ready
+    return mockTransactionAPI.create(transaction);
+    
+    // Real API implementation (uncomment when backend is ready):
+    // const response = await apiClient.post('/transactions', transaction);
+    // return response.data;
   },
   
   update: async (id: number, transaction: Partial<Transaction>): Promise<ApiResponse<Transaction>> => {
-    const response = await apiClient.put(`/transactions/${id}`, transaction);
-    return response.data;
+    // For now, use mock API. Replace with real API calls when backend is ready
+    return mockTransactionAPI.update(id, transaction);
+    
+    // Real API implementation (uncomment when backend is ready):
+    // const response = await apiClient.put(`/transactions/${id}`, transaction);
+    // return response.data;
   },
   
   delete: async (id: number): Promise<ApiResponse<void>> => {
-    const response = await apiClient.delete(`/transactions/${id}`);
-    return response.data;
+    // For now, use mock API. Replace with real API calls when backend is ready
+    return mockTransactionAPI.delete(id);
+    
+    // Real API implementation (uncomment when backend is ready):
+    // const response = await apiClient.delete(`/transactions/${id}`);
+    // return response.data;
   },
 };
 
 // Budget API
 export const budgetAPI = {
   getAll: async (): Promise<ApiResponse<Budget[]>> => {
-    const response = await apiClient.get('/budgets');
-    return response.data;
+    // For now, use mock API. Replace with real API calls when backend is ready
+    return mockBudgetAPI.getAll();
+    
+    // Real API implementation (uncomment when backend is ready):
+    // const response = await apiClient.get('/budgets');
+    // return response.data;
   },
   
   create: async (budget: Omit<Budget, 'id'>): Promise<ApiResponse<Budget>> => {
-    const response = await apiClient.post('/budgets', budget);
-    return response.data;
+    // For now, use mock API. Replace with real API calls when backend is ready
+    return mockBudgetAPI.create(budget);
+    
+    // Real API implementation (uncomment when backend is ready):
+    // const response = await apiClient.post('/budgets', budget);
+    // return response.data;
   },
   
   update: async (id: number, budget: Partial<Budget>): Promise<ApiResponse<Budget>> => {
-    const response = await apiClient.put(`/budgets/${id}`, budget);
-    return response.data;
+    // For now, use mock API. Replace with real API calls when backend is ready
+    return mockBudgetAPI.update(id, budget);
+    
+    // Real API implementation (uncomment when backend is ready):
+    // const response = await apiClient.put(`/budgets/${id}`, budget);
+    // return response.data;
   },
   
   delete: async (id: number): Promise<ApiResponse<void>> => {
-    const response = await apiClient.delete(`/budgets/${id}`);
-    return response.data;
+    // For now, use mock API. Replace with real API calls when backend is ready
+    return mockBudgetAPI.delete(id);
+    
+    // Real API implementation (uncomment when backend is ready):
+    // const response = await apiClient.delete(`/budgets/${id}`);
+    // return response.data;
   },
 };
 

@@ -10,6 +10,7 @@ import Dashboard from './pages/Dashboard';
 import Transactions from './pages/Transactions';
 import BudgetPage from './pages/BudgetPage';
 import Analytics from './pages/Analytics';
+import Reports from './pages/Reports';
 import ScheduledPurchases from './pages/ScheduledPurchases';
 import CashCoach from './pages/CashCoach';
 import Goals from './pages/Goals';
@@ -69,6 +70,11 @@ function App() {
             <Route path="/analytics" element={
               <PrivateRoute>
                 <Layout><Analytics /></Layout>
+              </PrivateRoute>
+            } />
+            <Route path="/reports" element={
+              <PrivateRoute>
+                <Layout><Reports /></Layout>
               </PrivateRoute>
             } />
             <Route path="/scheduled" element={

@@ -52,22 +52,83 @@ This project consists of several microservices:
 - **Build Tool**: Maven
 - **Architecture**: Microservices
 
+## 📋 Project Status
+
+### ✅ Recent Updates (January 2025)
+
+- **Java 17 Migration Completed**: Upgraded from Java 8 to Java 17
+- **Spring Boot 3.1.12**: Updated to latest stable Spring Boot version
+- **Build System**: Maven compiler updated to support Java 17
+- **Environment Setup**: Automated setup scripts created for easy development
+- **Build Verification**: All services compile and package successfully
+
+### 🔧 Development Environment
+
+The project now includes:
+- **Embedded Java 17**: OpenJDK 17.0.13 (Eclipse Temurin) included in project
+- **Embedded Maven**: Apache Maven 3.9.5 included in project
+- **Setup Scripts**: Automated PowerShell scripts for environment configuration
+- **Build Scripts**: One-click build and deployment scripts
+
+### 🚀 Next Steps
+
+- Run the frontend React application
+- Set up database configurations
+- Deploy to cloud infrastructure
+- Add comprehensive testing
+
+## 🤝 Contributing
+
+1. Ensure Java 17 is set up using `.\setup-java17.ps1`
+2. Build the project with `mvn clean install`
+3. Run tests with `mvn test`
+4. Follow standard Git workflow for contributions
+
 ## 🏃‍♂️ Getting Started
 
 ### Prerequisites
 
-- Java 17+
-- Maven 3.6+
+- Java 17+ (OpenJDK included in project)
+- Maven 3.9+ (included in project)
+- Windows PowerShell (for automation scripts)
 
-### Running the Application
+### Quick Setup
 
-1. **Build all services**
+**Option 1: Complete Automated Setup**
+
+```powershell
+.\setup-complete.ps1
+```
+
+This script will:
+- Configure Java 17 environment
+- Set up Maven
+- Build the entire project
+- Verify everything is working
+
+**Option 2: Manual Setup**
+
+1. **Set up Java 17 environment**
+
+   ```powershell
+   .\setup-java17.ps1
+   ```
+
+2. **Build all services**
 
    ```powershell
    mvn clean install
    ```
 
-2. **Start services individually**
+### Running the Application
+
+**Option 1: Start all services at once**
+
+```powershell
+.\start-services.ps1
+```
+
+**Option 2: Start services individually**
 
    **Start User Service:**
 

@@ -1,8 +1,0 @@
-C:\Users\busy_\OneDrive\Desktop\PF\Personal-Finance-Regulator\transaction-service\src\main\java\com\personalfinance\transaction\TransactionServiceApplication.java
-C:\Users\busy_\OneDrive\Desktop\PF\Personal-Finance-Regulator\transaction-service\src\main\java\com\personalfinance\transaction\model\Transaction.java
-C:\Users\busy_\OneDrive\Desktop\PF\Personal-Finance-Regulator\transaction-service\src\main\java\com\personalfinance\transaction\service\TransactionService.java
-C:\Users\busy_\OneDrive\Desktop\PF\Personal-Finance-Regulator\transaction-service\src\main\java\com\personalfinance\transaction\dto\TransactionResponse.java
-C:\Users\busy_\OneDrive\Desktop\PF\Personal-Finance-Regulator\transaction-service\src\main\java\com\personalfinance\transaction\dto\TransactionCreateRequest.java
-C:\Users\busy_\OneDrive\Desktop\PF\Personal-Finance-Regulator\transaction-service\src\main\java\com\personalfinance\transaction\dto\TransactionUpdateRequest.java
-C:\Users\busy_\OneDrive\Desktop\PF\Personal-Finance-Regulator\transaction-service\src\main\java\com\personalfinance\transaction\repository\TransactionRepository.java
-C:\Users\busy_\OneDrive\Desktop\PF\Personal-Finance-Regulator\transaction-service\src\main\java\com\personalfinance\transaction\controller\TransactionController.java

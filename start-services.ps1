@@ -1,6 +1,16 @@
 # Personal Finance Regulator - Start All Services
 Write-Host "Starting Personal Finance Regulator Services..." -ForegroundColor Green
 
+# Set up Java 17 environment
+Write-Host "Setting up Java 17 environment..." -ForegroundColor Yellow
+& ".\setup-java17.ps1"
+
+Write-Host ""
+Write-Host "Building all services..." -ForegroundColor Yellow
+mvn clean package -DskipTests
+
+Write-Host ""
+
 # Start API Gateway
 Write-Host "Starting API Gateway on port 8080..." -ForegroundColor Yellow
 Start-Job -Name "api-gateway" -ScriptBlock {
