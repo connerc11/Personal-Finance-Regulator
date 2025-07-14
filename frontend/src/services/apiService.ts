@@ -44,7 +44,7 @@ const analyticsServiceClient = axios.create({
 export const authAPI = {
   login: async (username: string, password: string): Promise<ApiResponse<{ user: User; token: string }>> => {
     try {
-      const response = await apiClient.post('/users/auth/signin', { username, password });
+      const response = await apiClient.post('/api/users/auth/signin', { username, password });
       return {
         success: true,
         data: {
@@ -92,7 +92,7 @@ export const authAPI = {
   
   register: async (userData: any): Promise<ApiResponse<{ user: User; token: string }>> => {
     try {
-      const response = await apiClient.post('/users/auth/signup', userData);
+      const response = await apiClient.post('/api/users/auth/signup', userData);
       return {
         success: true,
         data: {
@@ -122,13 +122,117 @@ export const authAPI = {
 // User API
 export const userAPI = {
   getProfile: async (): Promise<ApiResponse<User>> => {
-    const response = await apiClient.get('/users/profile');
-    return response.data;
+    try {
+      const response = await apiClient.get('/api/users/profile');
+      return {
+        success: true,
+        data: response.data,
+        message: 'Profile retrieved successfully'
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        data: {} as User,
+        message: error.response?.data?.message || 'Failed to get profile'
+      };
+    }
   },
   
   updateProfile: async (userData: Partial<User>): Promise<ApiResponse<User>> => {
-    const response = await apiClient.put('/users/profile', userData);
-    return response.data;
+    try {
+      const response = await apiClient.put('/api/users/profile', userData);
+      return {
+        success: true,
+        data: response.data,
+        message: 'Profile updated successfully'
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        data: {} as User,
+        message: error.response?.data?.message || 'Failed to update profile'
+      };
+    }
+  },
+
+  uploadAvatar: async (file: File): Promise<ApiResponse<{ avatarUrl: string }>> => {
+    try {
+      const formData = new FormData();
+      formData.append('avatar', file);
+      
+      const response = await apiClient.post('/api/users/profile/avatar', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      
+      return {
+        success: true,
+        data: response.data,
+        message: 'Avatar uploaded successfully'
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        data: { avatarUrl: '' },
+        message: error.response?.data?.message || 'Failed to upload avatar'
+      };
+    }
+  },
+
+  changePassword: async (currentPassword: string, newPassword: string): Promise<ApiResponse<string>> => {
+    try {
+      const response = await apiClient.post('/api/users/profile/change-password', {
+        currentPassword,
+        newPassword
+      });
+      
+      return {
+        success: true,
+        data: response.data,
+        message: 'Password changed successfully'
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        data: '',
+        message: error.response?.data?.message || 'Failed to change password'
+      };
+    }
+  },
+
+  getPreferences: async (): Promise<ApiResponse<any>> => {
+    try {
+      const response = await apiClient.get('/api/users/preferences');
+      return {
+        success: true,
+        data: response.data,
+        message: 'Preferences retrieved successfully'
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        data: {},
+        message: error.response?.data?.message || 'Failed to get preferences'
+      };
+    }
+  },
+
+  updatePreferences: async (preferences: any): Promise<ApiResponse<any>> => {
+    try {
+      const response = await apiClient.put('/api/users/preferences', preferences);
+      return {
+        success: true,
+        data: response.data,
+        message: 'Preferences updated successfully'
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        data: {},
+        message: error.response?.data?.message || 'Failed to update preferences'
+      };
+    }
   },
 };
 
@@ -138,7 +242,7 @@ export const transactionAPI = {
     try {
       // Try real API first
       if (userId) {
-        const response = await apiClient.get(`/transactions/user/${userId}`);
+        const response = await apiClient.get(`/api/transactions/user/${userId}`);
         return {
           success: true,
           data: response.data.content || response.data, // Handle paginated response
@@ -172,7 +276,7 @@ export const transactionAPI = {
   create: async (transaction: Omit<Transaction, 'id'>): Promise<ApiResponse<Transaction>> => {
     try {
       // Try real API first
-      const response = await apiClient.post('/transactions', transaction);
+      const response = await apiClient.post('/api/transactions', transaction);
       return {
         success: true,
         data: response.data,
@@ -273,7 +377,7 @@ export const budgetAPI = {
   getAll: async (userId: number): Promise<ApiResponse<Budget[]>> => {
     try {
       // Use real budget service API
-      const response = await budgetServiceClient.get(`/budgets/user/${userId}`);
+      const response = await apiClient.get(`/api/budgets/user/${userId}`);
       return {
         success: true,
         data: response.data,
@@ -303,7 +407,7 @@ export const budgetAPI = {
   create: async (budget: BudgetCreateRequest): Promise<ApiResponse<Budget>> => {
     try {
       // Use real budget service API
-      const response = await budgetServiceClient.post('/budgets', budget);
+      const response = await apiClient.post('/api/budgets', budget);
       return {
         success: true,
         data: response.data,
@@ -322,7 +426,7 @@ export const budgetAPI = {
   update: async (id: number, budget: BudgetUpdateRequest): Promise<ApiResponse<Budget>> => {
     try {
       // Use real budget service API
-      const response = await budgetServiceClient.put(`/budgets/${id}`, budget);
+      const response = await apiClient.put(`/api/budgets/${id}`, budget);
       return {
         success: true,
         data: response.data,
@@ -341,7 +445,7 @@ export const budgetAPI = {
   delete: async (id: number): Promise<ApiResponse<void>> => {
     try {
       // Use real budget service API
-      await budgetServiceClient.delete(`/budgets/${id}`);
+      await apiClient.delete(`/api/budgets/${id}`);
       return {
         success: true,
         data: undefined,
@@ -582,12 +686,12 @@ function aggregateTransactionsByMonth(transactions: Transaction[]): any[] {
 // Scheduled Purchase API
 export const scheduledPurchaseAPI = {
   getAll: async (): Promise<ApiResponse<ScheduledPurchase[]>> => {
-    const response = await apiClient.get('/scheduled-purchases');
+    const response = await apiClient.get('/api/scheduled-purchases');
     return response.data;
   },
   
   create: async (scheduledPurchase: Omit<ScheduledPurchase, 'id'>): Promise<ApiResponse<ScheduledPurchase>> => {
-    const response = await apiClient.post('/scheduled-purchases', scheduledPurchase);
+    const response = await apiClient.post('/api/scheduled-purchases', scheduledPurchase);
     return response.data;
   },
   

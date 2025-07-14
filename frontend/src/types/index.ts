@@ -7,6 +7,7 @@ export interface User {
   createdAt: string;
   // Extended profile information
   phoneNumber?: string;
+  avatarUrl?: string;
   dateOfBirth?: string;
   profilePicture?: string;
   bio?: string;
@@ -28,6 +29,24 @@ export interface User {
   monthlyBudget?: number;
   savingsGoal?: number;
   riskTolerance?: 'low' | 'medium' | 'high';
+}
+
+export interface UserPreferences {
+  id?: number;
+  userId: number;
+  // Notification preferences
+  emailNotifications: boolean;
+  pushNotifications: boolean;
+  budgetAlerts: boolean;
+  transactionAlerts: boolean;
+  securityAlerts: boolean;
+  // Privacy preferences
+  profileVisible: boolean;
+  shareData: boolean;
+  // Theme preferences
+  theme: string;
+  language: string;
+  currency: string;
 }
 
 export interface Transaction {

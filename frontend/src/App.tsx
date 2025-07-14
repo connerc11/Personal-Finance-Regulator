@@ -37,7 +37,6 @@ function App() {
       <CssBaseline />
       <AuthProvider>
         <Router>
-          <SessionManager />
           <Routes>
             <Route path="/login" element={
               <PublicRoute>
@@ -106,6 +105,7 @@ function App() {
             } />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
           </Routes>
+          <SessionManager />
         </Router>
       </AuthProvider>
     </ThemeProvider>

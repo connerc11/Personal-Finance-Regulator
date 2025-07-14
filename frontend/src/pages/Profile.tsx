@@ -28,6 +28,8 @@ import {
   Stack,
   Badge,
   Tooltip,
+  Snackbar,
+  Grid,
 } from '@mui/material';
 import {
   Edit as EditIcon,
@@ -47,39 +49,19 @@ import {
   Visibility as VisibilityIcon,
   VisibilityOff as VisibilityOffIcon,
   Delete as DeleteIcon,
+  CloudUpload as CloudUploadIcon,
+  Phone as PhoneIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
-import { User } from '../types';
+import { User, UserPreferences } from '../types';
 import { userAPI } from '../services/apiService';
 
-// Constants for localStorage keys
-const PREFERENCES_KEY = 'personal_finance_preferences';
-const TRANSACTIONS_KEY = 'personal_finance_transactions';
-const BUDGETS_KEY = 'personal_finance_budgets';
-
-interface UserPreferences {
-  notifications: {
-    email: boolean;
-    push: boolean;
-    budgetAlerts: boolean;
-    transactionAlerts: boolean;
-    weeklyReports: boolean;
-  };
-  privacy: {
-    profilePublic: boolean;
-    shareAnalytics: boolean;
-  };
-  appearance: {
-    darkMode: boolean;
-    currency: string;
-    language: string;
-  };
-}
+// Feature flags
+const ENABLE_PREFERENCES = false; // Set to false to hide preferences tab entirely
 
 interface AccountStats {
   totalTransactions: number;
   totalBudgets: number;
-  totalScheduled: number;
   accountAge: number;
   lastLogin: string;
 }
@@ -88,9 +70,12 @@ const Profile: React.FC = () => {
   const { user: authUser, logout } = useAuth();
   const [currentTab, setCurrentTab] = useState(0);
   const [user, setUser] = useState<User | null>(authUser);
+  const [preferences, setPreferences] = useState<UserPreferences | null>(null);
+  const [preferencesEnabled, setPreferencesEnabled] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   
   // Profile editing states
   const [editingProfile, setEditingProfile] = useState(false);
@@ -98,11 +83,11 @@ const Profile: React.FC = () => {
     firstName: '',
     lastName: '',
     email: '',
-    username: '',
+    phoneNumber: '',
   });
-
+  
   // Password change states
-  const [passwordDialog, setPasswordDialog] = useState(false);
+  const [changePasswordOpen, setChangePasswordOpen] = useState(false);
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: '',
     newPassword: '',
@@ -113,227 +98,69 @@ const Profile: React.FC = () => {
     new: false,
     confirm: false,
   });
+  
+  // Avatar upload state
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
 
-  // User-specific preferences
-  const [preferences, setPreferences] = useState<UserPreferences>({
-    notifications: {
-      email: true,
-      push: true,
-      budgetAlerts: true,
-      transactionAlerts: true,
-      weeklyReports: false,
-    },
-    privacy: {
-      profilePublic: false,
-      shareAnalytics: true,
-    },
-    appearance: {
-      darkMode: false,
-      currency: 'USD',
-      language: 'English',
-    },
-  });
-
-  // User-specific account stats (calculated from real data)
-  const [accountStats, setAccountStats] = useState<AccountStats>({
-    totalTransactions: 0,
-    totalBudgets: 0,
-    totalScheduled: 0,
-    accountAge: 0,
-    lastLogin: new Date().toISOString(),
-  });
-
-  // Load user-specific data from localStorage
+  // Load user profile and preferences
   useEffect(() => {
-    if (authUser) {
-      setUser(authUser);
-      setProfileForm({
-        firstName: authUser.firstName || '',
-        lastName: authUser.lastName || '',
-        email: authUser.email || '',
-        username: authUser.username || '',
-      });
-
-      // Load user-specific preferences
-      loadUserPreferences();
+    const loadUserData = async () => {
+      if (!authUser) return;
       
-      // Calculate account stats from real data
-      calculateAccountStats();
-    }
+      setLoading(true);
+      try {
+        // Load user profile
+        const profileResponse = await userAPI.getProfile();
+        if (profileResponse.success) {
+          setUser(profileResponse.data);
+          setProfileForm({
+            firstName: profileResponse.data.firstName || '',
+            lastName: profileResponse.data.lastName || '',
+            email: profileResponse.data.email || '',
+            phoneNumber: profileResponse.data.phoneNumber || '',
+          });
+        }
+        
+        // Load user preferences (if enabled)
+        if (ENABLE_PREFERENCES) {
+          const preferencesResponse = await userAPI.getPreferences();
+          if (preferencesResponse.success) {
+            setPreferences(preferencesResponse.data);
+            setPreferencesEnabled(true);
+          } else {
+            console.warn('Preferences not available:', preferencesResponse.message);
+            setPreferencesEnabled(false);
+          }
+        } else {
+          setPreferencesEnabled(false);
+        }
+      } catch (error) {
+        console.error('Error loading user data:', error);
+        setError('Failed to load user data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadUserData();
   }, [authUser]);
 
-  const loadUserPreferences = () => {
-    if (!authUser) return;
-
-    try {
-      const storedPreferences = localStorage.getItem(`${PREFERENCES_KEY}_${authUser.id}`);
-      if (storedPreferences) {
-        const parsedPreferences = JSON.parse(storedPreferences);
-        setPreferences(parsedPreferences);
-      }
-    } catch (error) {
-      console.error('Failed to load user preferences:', error);
-    }
-  };
-
-  const saveUserPreferences = (newPreferences: UserPreferences) => {
-    if (!authUser) return;
-
-    try {
-      localStorage.setItem(`${PREFERENCES_KEY}_${authUser.id}`, JSON.stringify(newPreferences));
-      setPreferences(newPreferences);
-    } catch (error) {
-      console.error('Failed to save user preferences:', error);
-      setError('Failed to save preferences');
-    }
-  };
-
-  const calculateAccountStats = () => {
-    if (!authUser) return;
-
-    try {
-      // Get user transactions
-      const storedTransactions = localStorage.getItem(`${TRANSACTIONS_KEY}_${authUser.id}`);
-      const transactions = storedTransactions ? JSON.parse(storedTransactions) : [];
-
-      // Get user budgets
-      const storedBudgets = localStorage.getItem(`${BUDGETS_KEY}_${authUser.id}`);
-      const budgets = storedBudgets ? JSON.parse(storedBudgets) : [];
-
-      // Calculate account age in days
-      const createdAt = new Date(authUser.createdAt);
-      const now = new Date();
-      const accountAge = Math.floor((now.getTime() - createdAt.getTime()) / (1000 * 60 * 60 * 24));
-
-      // For scheduled purchases, we'll use a simple estimate based on recurring transactions
-      const recurringTransactions = transactions.filter((t: any) => 
-        t.description?.toLowerCase().includes('subscription') || 
-        t.description?.toLowerCase().includes('recurring') ||
-        t.description?.toLowerCase().includes('monthly')
-      );
-
-      setAccountStats({
-        totalTransactions: transactions.length,
-        totalBudgets: budgets.length,
-        totalScheduled: recurringTransactions.length,
-        accountAge: Math.max(accountAge, 0),
-        lastLogin: authUser.lastLoginAt || new Date().toISOString(),
-      });
-    } catch (error) {
-      console.error('Failed to calculate account stats:', error);
-    }
-  };
-
-  const getRecentActivity = () => {
-    if (!authUser) return [];
-
-    const activities: { description: string; time: string }[] = [];
-
-    try {
-      // Get recent transactions (last 5)
-      const storedTransactions = localStorage.getItem(`${TRANSACTIONS_KEY}_${authUser.id}`);
-      const transactions = storedTransactions ? JSON.parse(storedTransactions) : [];
-      
-      const recentTransactions = transactions
-        .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())
-        .slice(0, 3);
-
-      recentTransactions.forEach((transaction: any) => {
-        activities.push({
-          description: `${transaction.type === 'income' ? 'Received' : 'Spent'} $${Math.abs(transaction.amount)} - ${transaction.description}`,
-          time: new Date(transaction.date).toLocaleDateString(),
-        });
-      });
-
-      // Get recent budgets (last 2)
-      const storedBudgets = localStorage.getItem(`${BUDGETS_KEY}_${authUser.id}`);
-      const budgets = storedBudgets ? JSON.parse(storedBudgets) : [];
-      
-      const recentBudgets = budgets
-        .sort((a: any, b: any) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
-        .slice(0, 2);
-
-      recentBudgets.forEach((budget: any) => {
-        activities.push({
-          description: `Created budget for '${budget.category}' - $${budget.amount}`,
-          time: budget.createdAt ? new Date(budget.createdAt).toLocaleDateString() : 'Recently',
-        });
-      });
-
-    } catch (error) {
-      console.error('Failed to get recent activity:', error);
-    }
-
-    return activities.slice(0, 5); // Return max 5 activities
-  };
-
-  // Load user profile data
-  const loadUserProfile = async () => {
-    try {
-      setLoading(true);
-      // In real app, fetch extended profile data from API
-      // const response = await userAPI.getProfile();
-      // setUser(response.data);
-      
-      // For now, use the authenticated user data with some defaults
-      if (authUser) {
-        const extendedUser: User = {
-          ...authUser,
-          phoneNumber: authUser.phoneNumber || '',
-          dateOfBirth: authUser.dateOfBirth || '',
-          profilePicture: authUser.profilePicture || '',
-          bio: authUser.bio || '',
-          occupation: authUser.occupation || '',
-          annualIncome: authUser.annualIncome || 0,
-          currency: authUser.currency || 'USD',
-          timezone: authUser.timezone || 'UTC',
-          notifications: authUser.notifications || {
-            email: true,
-            push: true,
-            budgetAlerts: true,
-            weeklyReports: false,
-          },
-          twoFactorEnabled: authUser.twoFactorEnabled || false,
-          lastLoginAt: authUser.lastLoginAt || new Date().toISOString(),
-          monthlyBudget: authUser.monthlyBudget || 0,
-          savingsGoal: authUser.savingsGoal || 0,
-          riskTolerance: authUser.riskTolerance || 'medium',
-        };
-        
-        setUser(extendedUser);
-        setProfileForm({
-          firstName: extendedUser.firstName,
-          lastName: extendedUser.lastName,
-          email: extendedUser.email,
-          username: extendedUser.username,
-        });
-      }
-    } catch (error) {
-      setError('Failed to load profile');
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // Handle profile update
   const handleSaveProfile = async () => {
+    if (!user) return;
+    
+    setSaving(true);
+    setError(null);
+    
     try {
-      setSaving(true);
-      // In real app, call API
-      // await userAPI.updateProfile(profileForm);
-      
-      // Update local state
-      if (user) {
-        setUser({
-          ...user,
-          firstName: profileForm.firstName,
-          lastName: profileForm.lastName,
-          email: profileForm.email,
-          username: profileForm.username,
-        });
+      const response = await userAPI.updateProfile(profileForm);
+      if (response.success) {
+        setUser(response.data);
+        setEditingProfile(false);
+        setSuccessMessage('Profile updated successfully');
+      } else {
+        setError(response.message || 'Failed to update profile');
       }
-      
-      setEditingProfile(false);
-      setError(null);
     } catch (error) {
       setError('Failed to update profile');
     } finally {
@@ -341,42 +168,53 @@ const Profile: React.FC = () => {
     }
   };
 
-  const handleCancelEdit = () => {
-    if (user) {
-      setProfileForm({
-        firstName: user.firstName,
-        lastName: user.lastName,
-        email: user.email,
-        username: user.username,
-      });
+  // Handle avatar upload
+  const handleAvatarUpload = async (file: File) => {
+    setSaving(true);
+    setError(null);
+    
+    try {
+      const response = await userAPI.uploadAvatar(file);
+      if (response.success) {
+        setUser(prev => prev ? { ...prev, avatarUrl: response.data.avatarUrl } : null);
+        setSuccessMessage('Avatar updated successfully');
+      } else {
+        setError(response.message || 'Failed to upload avatar');
+      }
+    } catch (error) {
+      setError('Failed to upload avatar');
+    } finally {
+      setSaving(false);
     }
-    setEditingProfile(false);
   };
 
+  // Handle password change
   const handleChangePassword = async () => {
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
       setError('New passwords do not match');
       return;
     }
-
-    if (passwordForm.newPassword.length < 8) {
-      setError('Password must be at least 8 characters long');
-      return;
-    }
-
+    
+    setSaving(true);
+    setError(null);
+    
     try {
-      setSaving(true);
-      // In real app, call password change API
-      // await userAPI.changePassword(passwordForm);
+      const response = await userAPI.changePassword(
+        passwordForm.currentPassword,
+        passwordForm.newPassword
+      );
       
-      setPasswordDialog(false);
-      setPasswordForm({
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: '',
-      });
-      setError(null);
-      alert('Password changed successfully!');
+      if (response.success) {
+        setChangePasswordOpen(false);
+        setPasswordForm({
+          currentPassword: '',
+          newPassword: '',
+          confirmPassword: '',
+        });
+        setSuccessMessage('Password changed successfully');
+      } else {
+        setError(response.message || 'Failed to change password');
+      }
     } catch (error) {
       setError('Failed to change password');
     } finally {
@@ -384,533 +222,460 @@ const Profile: React.FC = () => {
     }
   };
 
-  const handlePreferenceChange = (category: keyof UserPreferences, key: string, value: any) => {
-    const newPreferences = {
-      ...preferences,
-      [category]: {
-        ...preferences[category],
-        [key]: value,
-      },
-    };
+  // Handle preference changes
+  const handlePreferenceChange = async (key: keyof UserPreferences, value: any) => {
+    if (!ENABLE_PREFERENCES || !preferences) return;
     
-    // Save to localStorage immediately
-    saveUserPreferences(newPreferences);
+    const updatedPreferences = { ...preferences, [key]: value };
+    setPreferences(updatedPreferences);
+    
+    try {
+      const response = await userAPI.updatePreferences(updatedPreferences);
+      if (response.success) {
+        setSuccessMessage('Preferences updated');
+      } else {
+        setError(response.message || 'Failed to update preferences');
+        // Revert on error
+        setPreferences(preferences);
+      }
+    } catch (error) {
+      setError('Failed to update preferences');
+      setPreferences(preferences);
+    }
   };
 
-  const getInitials = (firstName: string, lastName: string) => {
-    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+  const calculateAccountAge = () => {
+    if (!user?.createdAt) return 0;
+    const created = new Date(user.createdAt);
+    const now = new Date();
+    const diffTime = Math.abs(now.getTime() - created.getTime());
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   };
 
-  const formatAccountAge = (days: number) => {
-    if (days < 30) return `${days} days`;
-    if (days < 365) return `${Math.floor(days / 30)} months`;
-    return `${Math.floor(days / 365)} years`;
-  };
-
-  if (loading) {
-    return (
-      <Box sx={{ p: 3 }}>
-        <Typography variant="h4" gutterBottom>
-          Profile
-        </Typography>
-        <LinearProgress sx={{ mt: 2 }} />
-        <Typography variant="body2" sx={{ mt: 1, color: 'text.secondary' }}>
-          Loading your profile...
-        </Typography>
-      </Box>
-    );
-  }
-
-  if (!user) {
-    return (
-      <Box sx={{ p: 3 }}>
-        <Alert severity="error">
-          Failed to load user profile. Please try again.
-        </Alert>
-      </Box>
-    );
-  }
-
-  return (
-    <Box sx={{ p: 3 }}>
-      {/* Header */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" component="h1">
-          Profile Settings
-        </Typography>
-        <Chip
-          icon={<CheckCircleIcon />}
-          label="Account Verified"
-          color="success"
-          variant="outlined"
-        />
-      </Box>
-
-      {error && (
-        <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
-          {error}
-        </Alert>
-      )}
-
-      {/* Tabs */}
+  const renderProfileTab = () => (
+    <Box>
       <Card sx={{ mb: 3 }}>
-        <Tabs value={currentTab} onChange={(e, newValue) => setCurrentTab(newValue)}>
-          <Tab icon={<PersonIcon />} label="Profile" />
-          <Tab icon={<SettingsIcon />} label="Preferences" />
-          <Tab icon={<SecurityIcon />} label="Security" />
-          <Tab icon={<AnalyticsIcon />} label="Account Stats" />
-        </Tabs>
+        <CardContent>
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+            <Badge
+              overlap="circular"
+              anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+              badgeContent={
+                <IconButton
+                  size="small"
+                  component="label"
+                  sx={{
+                    bgcolor: 'primary.main',
+                    color: 'white',
+                    '&:hover': { bgcolor: 'primary.dark' },
+                  }}
+                >
+                  <CameraIcon fontSize="small" />
+                  <input
+                    type="file"
+                    hidden
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        handleAvatarUpload(file);
+                      }
+                    }}
+                  />
+                </IconButton>
+              }
+            >
+              <Avatar
+                src={user?.avatarUrl}
+                sx={{ width: 100, height: 100 }}
+              >
+                {user?.firstName?.[0]}{user?.lastName?.[0]}
+              </Avatar>
+            </Badge>
+            <Box sx={{ ml: 2, flex: 1 }}>
+              <Typography variant="h5" gutterBottom>
+                {user?.firstName} {user?.lastName}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                @{user?.username}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Member since {new Date(user?.createdAt || '').toLocaleDateString()}
+              </Typography>
+            </Box>
+            <Button
+              variant={editingProfile ? "contained" : "outlined"}
+              startIcon={editingProfile ? <SaveIcon /> : <EditIcon />}
+              onClick={editingProfile ? handleSaveProfile : () => setEditingProfile(true)}
+              disabled={saving}
+            >
+              {editingProfile ? 'Save' : 'Edit'}
+            </Button>
+            {editingProfile && (
+              <Button
+                variant="outlined"
+                startIcon={<CancelIcon />}
+                onClick={() => {
+                  setEditingProfile(false);
+                  setProfileForm({
+                    firstName: user?.firstName || '',
+                    lastName: user?.lastName || '',
+                    email: user?.email || '',
+                    phoneNumber: user?.phoneNumber || '',
+                  });
+                }}
+                sx={{ ml: 1 }}
+              >
+                Cancel
+              </Button>
+            )}
+          </Box>
+
+          {editingProfile ? (
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="First Name"
+                  value={profileForm.firstName}
+                  onChange={(e) => setProfileForm(prev => ({ ...prev, firstName: e.target.value }))}
+                  fullWidth
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Last Name"
+                  value={profileForm.lastName}
+                  onChange={(e) => setProfileForm(prev => ({ ...prev, lastName: e.target.value }))}
+                  fullWidth
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Email"
+                  type="email"
+                  value={profileForm.email}
+                  onChange={(e) => setProfileForm(prev => ({ ...prev, email: e.target.value }))}
+                  fullWidth
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Phone Number"
+                  value={profileForm.phoneNumber}
+                  onChange={(e) => setProfileForm(prev => ({ ...prev, phoneNumber: e.target.value }))}
+                  fullWidth
+                />
+              </Grid>
+            </Grid>
+          ) : (
+            <List>
+              <ListItem>
+                <ListItemIcon><PersonIcon /></ListItemIcon>
+                <ListItemText primary="Full Name" secondary={`${user?.firstName} ${user?.lastName}`} />
+              </ListItem>
+              <ListItem>
+                <ListItemIcon><EmailIcon /></ListItemIcon>
+                <ListItemText primary="Email" secondary={user?.email} />
+              </ListItem>
+              <ListItem>
+                <ListItemIcon><PhoneIcon /></ListItemIcon>
+                <ListItemText primary="Phone" secondary={user?.phoneNumber || 'Not set'} />
+              </ListItem>
+            </List>
+          )}
+        </CardContent>
+      </Card>
+    </Box>
+  );
+
+  const renderPreferencesTab = () => {
+    if (!preferences) return <Typography>Loading preferences...</Typography>;
+
+    return (
+      <Box>
+        <Card sx={{ mb: 3 }}>
+          <CardContent>
+            <Typography variant="h6" gutterBottom>
+              <NotificationsIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+              Notifications
+            </Typography>
+            <List>
+              <ListItem>
+                <ListItemText primary="Email Notifications" secondary="Receive notifications via email" />
+                <Switch
+                  checked={preferences.emailNotifications}
+                  onChange={(e) => handlePreferenceChange('emailNotifications', e.target.checked)}
+                />
+              </ListItem>
+              <ListItem>
+                <ListItemText primary="Push Notifications" secondary="Receive push notifications" />
+                <Switch
+                  checked={preferences.pushNotifications}
+                  onChange={(e) => handlePreferenceChange('pushNotifications', e.target.checked)}
+                />
+              </ListItem>
+              <ListItem>
+                <ListItemText primary="Budget Alerts" secondary="Get notified when approaching budget limits" />
+                <Switch
+                  checked={preferences.budgetAlerts}
+                  onChange={(e) => handlePreferenceChange('budgetAlerts', e.target.checked)}
+                />
+              </ListItem>
+              <ListItem>
+                <ListItemText primary="Transaction Alerts" secondary="Get notified of new transactions" />
+                <Switch
+                  checked={preferences.transactionAlerts}
+                  onChange={(e) => handlePreferenceChange('transactionAlerts', e.target.checked)}
+                />
+              </ListItem>
+              <ListItem>
+                <ListItemText primary="Security Alerts" secondary="Get notified of security events" />
+                <Switch
+                  checked={preferences.securityAlerts}
+                  onChange={(e) => handlePreferenceChange('securityAlerts', e.target.checked)}
+                />
+              </ListItem>
+            </List>
+          </CardContent>
+        </Card>
+
+        <Card sx={{ mb: 3 }}>
+          <CardContent>
+            <Typography variant="h6" gutterBottom>
+              Privacy Settings
+            </Typography>
+            <List>
+              <ListItem>
+                <ListItemText primary="Profile Visibility" secondary="Make your profile visible to others" />
+                <Switch
+                  checked={preferences.profileVisible}
+                  onChange={(e) => handlePreferenceChange('profileVisible', e.target.checked)}
+                />
+              </ListItem>
+              <ListItem>
+                <ListItemText primary="Share Data for Analytics" secondary="Help improve our service with anonymous data" />
+                <Switch
+                  checked={preferences.shareData}
+                  onChange={(e) => handlePreferenceChange('shareData', e.target.checked)}
+                />
+              </ListItem>
+            </List>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent>
+            <Typography variant="h6" gutterBottom>
+              Appearance & Language
+            </Typography>
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  label="Theme"
+                  select
+                  value={preferences.theme}
+                  onChange={(e) => handlePreferenceChange('theme', e.target.value)}
+                  fullWidth
+                  SelectProps={{ native: true }}
+                >
+                  <option value="light">Light</option>
+                  <option value="dark">Dark</option>
+                  <option value="auto">Auto</option>
+                </TextField>
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  label="Language"
+                  select
+                  value={preferences.language}
+                  onChange={(e) => handlePreferenceChange('language', e.target.value)}
+                  fullWidth
+                  SelectProps={{ native: true }}
+                >
+                  <option value="en">English</option>
+                  <option value="es">Spanish</option>
+                  <option value="fr">French</option>
+                </TextField>
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  label="Currency"
+                  select
+                  value={preferences.currency}
+                  onChange={(e) => handlePreferenceChange('currency', e.target.value)}
+                  fullWidth
+                  SelectProps={{ native: true }}
+                >
+                  <option value="USD">USD</option>
+                  <option value="EUR">EUR</option>
+                  <option value="GBP">GBP</option>
+                  <option value="CAD">CAD</option>
+                </TextField>
+              </Grid>
+            </Grid>
+          </CardContent>
+        </Card>
+      </Box>
+    );
+  };
+
+  const renderSecurityTab = () => (
+    <Box>
+      <Card sx={{ mb: 3 }}>
+        <CardContent>
+          <Typography variant="h6" gutterBottom>
+            <LockIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+            Password & Security
+          </Typography>
+          <Button
+            variant="outlined"
+            onClick={() => setChangePasswordOpen(true)}
+            sx={{ mb: 2 }}
+          >
+            Change Password
+          </Button>
+          <Typography variant="body2" color="text.secondary">
+            Last password change: Never
+          </Typography>
+        </CardContent>
       </Card>
 
-      {/* Profile Tab */}
-      {currentTab === 0 && (
-        <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
-          <Box sx={{ flex: '0 0 300px', minWidth: '300px' }}>
+      <Card sx={{ mb: 3 }}>
+        <CardContent>
+          <Typography variant="h6" gutterBottom color="error">
+            <WarningIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+            Danger Zone
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            These actions cannot be undone. Please be careful.
+          </Typography>
+          <Button
+            variant="outlined"
+            color="error"
+            onClick={() => {
+              if (window.confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
+                // Handle account deletion
+                alert('Account deletion functionality not implemented yet');
+              }
+            }}
+          >
+            Delete Account
+          </Button>
+        </CardContent>
+      </Card>
+    </Box>
+  );
+
+  const renderAccountStatsTab = () => {
+    const stats: AccountStats = {
+      totalTransactions: 0, // This would come from API
+      totalBudgets: 0, // This would come from API
+      accountAge: calculateAccountAge(),
+      lastLogin: 'Today', // This would come from API
+    };
+
+    return (
+      <Box>
+        <Grid container spacing={3}>
+          <Grid item xs={12} sm={6} md={3}>
             <Card>
               <CardContent sx={{ textAlign: 'center' }}>
-                <Badge
-                  overlap="circular"
-                  anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-                  badgeContent={
-                    <IconButton
-                      size="small"
-                      sx={{
-                        bgcolor: 'primary.main',
-                        color: 'white',
-                        '&:hover': { bgcolor: 'primary.dark' },
-                      }}
-                    >
-                      <CameraIcon fontSize="small" />
-                    </IconButton>
-                  }
-                >
-                  <Avatar
-                    sx={{
-                      width: 120,
-                      height: 120,
-                      fontSize: '2rem',
-                      bgcolor: 'primary.main',
-                      mx: 'auto',
-                      mb: 2,
-                    }}
-                  >
-                    {getInitials(user.firstName, user.lastName)}
-                  </Avatar>
-                </Badge>
-                <Typography variant="h5" gutterBottom>
-                  {user.firstName} {user.lastName}
-                </Typography>
-                <Typography variant="body2" color="text.secondary" gutterBottom>
-                  @{user.username}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Member since {new Date(user.createdAt).toLocaleDateString()}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Box>
-
-          <Box sx={{ flex: '1 1 400px' }}>
-            <Card>
-              <CardContent>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                  <Typography variant="h6">
-                    Personal Information
-                  </Typography>
-                  {!editingProfile ? (
-                    <Button
-                      startIcon={<EditIcon />}
-                      onClick={() => setEditingProfile(true)}
-                    >
-                      Edit Profile
-                    </Button>
-                  ) : (
-                    <Stack direction="row" spacing={1}>
-                      <Button
-                        startIcon={<SaveIcon />}
-                        variant="contained"
-                        onClick={handleSaveProfile}
-                        disabled={saving}
-                      >
-                        Save
-                      </Button>
-                      <Button
-                        startIcon={<CancelIcon />}
-                        onClick={handleCancelEdit}
-                      >
-                        Cancel
-                      </Button>
-                    </Stack>
-                  )}
-                </Box>
-
-                <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 3 }}>
-                  <TextField
-                    label="First Name"
-                    fullWidth
-                    value={profileForm.firstName}
-                    onChange={(e) => setProfileForm({ ...profileForm, firstName: e.target.value })}
-                    disabled={!editingProfile}
-                    variant={editingProfile ? 'outlined' : 'filled'}
-                  />
-                  <TextField
-                    label="Last Name"
-                    fullWidth
-                    value={profileForm.lastName}
-                    onChange={(e) => setProfileForm({ ...profileForm, lastName: e.target.value })}
-                    disabled={!editingProfile}
-                    variant={editingProfile ? 'outlined' : 'filled'}
-                  />
-                  <TextField
-                    label="Email"
-                    type="email"
-                    fullWidth
-                    value={profileForm.email}
-                    onChange={(e) => setProfileForm({ ...profileForm, email: e.target.value })}
-                    disabled={!editingProfile}
-                    variant={editingProfile ? 'outlined' : 'filled'}
-                  />
-                  <TextField
-                    label="Username"
-                    fullWidth
-                    value={profileForm.username}
-                    onChange={(e) => setProfileForm({ ...profileForm, username: e.target.value })}
-                    disabled={!editingProfile}
-                    variant={editingProfile ? 'outlined' : 'filled'}
-                  />
-                </Box>
-              </CardContent>
-            </Card>
-          </Box>
-        </Box>
-      )}
-
-      {/* Preferences Tab */}
-      {currentTab === 1 && (
-        <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
-          <Box sx={{ flex: '1 1 400px' }}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  <NotificationsIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
-                  Notifications
-                </Typography>
-                <List>
-                  <ListItem>
-                    <ListItemText primary="Email Notifications" secondary="Receive notifications via email" />
-                    <Switch
-                      checked={preferences.notifications.email}
-                      onChange={(e) => handlePreferenceChange('notifications', 'email', e.target.checked)}
-                    />
-                  </ListItem>
-                  <ListItem>
-                    <ListItemText primary="Push Notifications" secondary="Receive push notifications" />
-                    <Switch
-                      checked={preferences.notifications.push}
-                      onChange={(e) => handlePreferenceChange('notifications', 'push', e.target.checked)}
-                    />
-                  </ListItem>
-                  <ListItem>
-                    <ListItemText primary="Budget Alerts" secondary="Get notified when approaching budget limits" />
-                    <Switch
-                      checked={preferences.notifications.budgetAlerts}
-                      onChange={(e) => handlePreferenceChange('notifications', 'budgetAlerts', e.target.checked)}
-                    />
-                  </ListItem>
-                  <ListItem>
-                    <ListItemText primary="Transaction Alerts" secondary="Get notified of new transactions" />
-                    <Switch
-                      checked={preferences.notifications.transactionAlerts}
-                      onChange={(e) => handlePreferenceChange('notifications', 'transactionAlerts', e.target.checked)}
-                    />
-                  </ListItem>
-                  <ListItem>
-                    <ListItemText primary="Weekly Reports" secondary="Receive weekly spending reports" />
-                    <Switch
-                      checked={preferences.notifications.weeklyReports}
-                      onChange={(e) => handlePreferenceChange('notifications', 'weeklyReports', e.target.checked)}
-                    />
-                  </ListItem>
-                </List>
-              </CardContent>
-            </Card>
-          </Box>
-
-          <Box sx={{ flex: '1 1 400px' }}>
-            <Stack spacing={3}>
-              <Card>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    Privacy Settings
-                  </Typography>
-                  <List>
-                    <ListItem>
-                      <ListItemText primary="Public Profile" secondary="Make your profile visible to others" />
-                      <Switch
-                        checked={preferences.privacy.profilePublic}
-                        onChange={(e) => handlePreferenceChange('privacy', 'profilePublic', e.target.checked)}
-                      />
-                    </ListItem>
-                    <ListItem>
-                      <ListItemText primary="Share Analytics" secondary="Allow anonymous analytics sharing" />
-                      <Switch
-                        checked={preferences.privacy.shareAnalytics}
-                        onChange={(e) => handlePreferenceChange('privacy', 'shareAnalytics', e.target.checked)}
-                      />
-                    </ListItem>
-                  </List>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    Appearance
-                  </Typography>
-                  <List>
-                    <ListItem>
-                      <ListItemText primary="Dark Mode" secondary="Use dark theme" />
-                      <Switch
-                        checked={preferences.appearance.darkMode}
-                        onChange={(e) => handlePreferenceChange('appearance', 'darkMode', e.target.checked)}
-                      />
-                    </ListItem>
-                  </List>
-                  <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
-                    <TextField
-                      select
-                      label="Currency"
-                      sx={{ flex: 1 }}
-                      value={preferences.appearance.currency}
-                      onChange={(e) => handlePreferenceChange('appearance', 'currency', e.target.value)}
-                      SelectProps={{ native: true }}
-                    >
-                      <option value="USD">USD ($)</option>
-                      <option value="EUR">EUR (€)</option>
-                      <option value="GBP">GBP (£)</option>
-                      <option value="JPY">JPY (¥)</option>
-                    </TextField>
-                    <TextField
-                      select
-                      label="Language"
-                      sx={{ flex: 1 }}
-                      value={preferences.appearance.language}
-                      onChange={(e) => handlePreferenceChange('appearance', 'language', e.target.value)}
-                      SelectProps={{ native: true }}
-                    >
-                      <option value="English">English</option>
-                      <option value="Spanish">Spanish</option>
-                      <option value="French">French</option>
-                      <option value="German">German</option>
-                    </TextField>
-                  </Box>
-                </CardContent>
-              </Card>
-            </Stack>
-          </Box>
-        </Box>
-      )}
-
-      {/* Security Tab */}
-      {currentTab === 2 && (
-        <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
-          <Box sx={{ flex: '1 1 400px' }}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  <LockIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
-                  Password & Security
-                </Typography>
-                <List>
-                  <ListItem>
-                    <ListItemIcon>
-                      <LockIcon />
-                    </ListItemIcon>
-                    <ListItemText
-                      primary="Change Password"
-                      secondary="Last changed 30 days ago"
-                    />
-                    <Button
-                      variant="outlined"
-                      onClick={() => setPasswordDialog(true)}
-                    >
-                      Change
-                    </Button>
-                  </ListItem>
-                  <Divider />
-                  <ListItem>
-                    <ListItemIcon>
-                      <SecurityIcon />
-                    </ListItemIcon>
-                    <ListItemText
-                      primary="Two-Factor Authentication"
-                      secondary="Add an extra layer of security"
-                    />
-                    <Button variant="outlined" color="primary">
-                      Enable
-                    </Button>
-                  </ListItem>
-                  <Divider />
-                  <ListItem>
-                    <ListItemIcon>
-                      <VisibilityIcon />
-                    </ListItemIcon>
-                    <ListItemText
-                      primary="Login Sessions"
-                      secondary="Manage your active sessions"
-                    />
-                    <Button variant="outlined">
-                      View
-                    </Button>
-                  </ListItem>
-                </List>
-              </CardContent>
-            </Card>
-          </Box>
-
-          <Box sx={{ flex: '1 1 400px' }}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6" gutterBottom color="error">
-                  <WarningIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
-                  Danger Zone
-                </Typography>
-                <List>
-                  <ListItem>
-                    <ListItemText
-                      primary="Export Data"
-                      secondary="Download all your data"
-                    />
-                    <Button variant="outlined">
-                      Export
-                    </Button>
-                  </ListItem>
-                  <Divider />
-                  <ListItem>
-                    <ListItemText
-                      primary="Delete Account"
-                      secondary="Permanently delete your account and all data"
-                    />
-                    <Button
-                      variant="outlined"
-                      color="error"
-                      startIcon={<DeleteIcon />}
-                    >
-                      Delete
-                    </Button>
-                  </ListItem>
-                </List>
-              </CardContent>
-            </Card>
-          </Box>
-        </Box>
-      )}
-
-      {/* Account Stats Tab */}
-      {currentTab === 3 && (
-        <>
-          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 3, mb: 3 }}>
-            <Card>
-              <CardContent sx={{ textAlign: 'center' }}>
-                <Typography variant="h3" color="primary.main">
-                  {accountStats.totalTransactions}
-                </Typography>
+                <AnalyticsIcon sx={{ fontSize: 40, color: 'primary.main', mb: 1 }} />
+                <Typography variant="h4">{stats.totalTransactions}</Typography>
                 <Typography variant="body2" color="text.secondary">
                   Total Transactions
                 </Typography>
               </CardContent>
             </Card>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
             <Card>
               <CardContent sx={{ textAlign: 'center' }}>
-                <Typography variant="h3" color="success.main">
-                  {accountStats.totalBudgets}
-                </Typography>
+                <AccountBoxIcon sx={{ fontSize: 40, color: 'secondary.main', mb: 1 }} />
+                <Typography variant="h4">{stats.totalBudgets}</Typography>
                 <Typography variant="body2" color="text.secondary">
                   Active Budgets
                 </Typography>
               </CardContent>
             </Card>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
             <Card>
               <CardContent sx={{ textAlign: 'center' }}>
-                <Typography variant="h3" color="warning.main">
-                  {accountStats.totalScheduled}
-                </Typography>
+                <PersonIcon sx={{ fontSize: 40, color: 'success.main', mb: 1 }} />
+                <Typography variant="h4">{stats.accountAge}</Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Scheduled Purchases
+                  Days Active
                 </Typography>
               </CardContent>
             </Card>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
             <Card>
               <CardContent sx={{ textAlign: 'center' }}>
-                <Typography variant="h3" color="info.main">
-                  {formatAccountAge(accountStats.accountAge)}
-                </Typography>
+                <CheckCircleIcon sx={{ fontSize: 40, color: 'info.main', mb: 1 }} />
+                <Typography variant="h4">{stats.lastLogin}</Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Account Age
+                  Last Login
                 </Typography>
               </CardContent>
             </Card>
-          </Box>
+          </Grid>
+        </Grid>
+      </Box>
+    );
+  };
 
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Recent Activity
-              </Typography>
-              {getRecentActivity().length === 0 ? (
-                <Box sx={{ textAlign: 'center', py: 4 }}>
-                  <Typography variant="body2" color="text.secondary">
-                    No recent activity to display
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    Start by creating transactions or budgets
-                  </Typography>
-                </Box>
-              ) : (
-                <List>
-                  {getRecentActivity().map((activity, index) => (
-                    <ListItem key={index}>
-                      <ListItemIcon>
-                        <CheckCircleIcon color="success" />
-                      </ListItemIcon>
-                      <ListItemText
-                        primary={activity.description}
-                        secondary={activity.time}
-                      />
-                    </ListItem>
-                  ))}
-                  <ListItem>
-                    <ListItemIcon>
-                      <CheckCircleIcon color="info" />
-                    </ListItemIcon>
-                    <ListItemText
-                      primary={`Last login: ${new Date(accountStats.lastLogin).toLocaleDateString()}`}
-                      secondary={new Date(accountStats.lastLogin).toLocaleTimeString()}
-                    />
-                  </ListItem>
-                </List>
-              )}
-            </CardContent>
-          </Card>
-        </>
-      )}
+  if (!user) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
+        <Typography>Loading...</Typography>
+      </Box>
+    );
+  }
 
-      {/* Password Change Dialog */}
-      <Dialog open={passwordDialog} onClose={() => setPasswordDialog(false)} maxWidth="sm" fullWidth>
+  return (
+    <Box sx={{ maxWidth: 1200, mx: 'auto', p: 3 }}>
+      <Typography variant="h4" gutterBottom>
+        Profile Settings
+      </Typography>
+
+      {loading && <LinearProgress sx={{ mb: 2 }} />}
+
+      <Paper sx={{ mb: 3 }}>
+        <Tabs
+          value={currentTab}
+          onChange={(_, newValue) => setCurrentTab(newValue)}
+          variant="scrollable"
+          scrollButtons="auto"
+        >
+          <Tab label="Profile" icon={<PersonIcon />} />
+          {preferencesEnabled && <Tab label="Preferences" icon={<SettingsIcon />} />}
+          <Tab label="Security" icon={<SecurityIcon />} />
+          <Tab label="Account Stats" icon={<AnalyticsIcon />} />
+        </Tabs>
+      </Paper>
+
+      {currentTab === 0 && renderProfileTab()}
+      {preferencesEnabled && currentTab === 1 && renderPreferencesTab()}
+      {currentTab === (preferencesEnabled ? 2 : 1) && renderSecurityTab()}
+      {currentTab === (preferencesEnabled ? 3 : 2) && renderAccountStatsTab()}
+
+      {/* Change Password Dialog */}
+      <Dialog open={changePasswordOpen} onClose={() => setChangePasswordOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle>Change Password</DialogTitle>
         <DialogContent>
-          <Stack spacing={3} sx={{ mt: 1 }}>
+          <Stack spacing={2} sx={{ mt: 1 }}>
             <TextField
               label="Current Password"
-              type={showPasswords.current ? 'text' : 'password'}
-              fullWidth
+              type={showPasswords.current ? "text" : "password"}
               value={passwordForm.currentPassword}
-              onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
+              onChange={(e) => setPasswordForm(prev => ({ ...prev, currentPassword: e.target.value }))}
+              fullWidth
               InputProps={{
                 endAdornment: (
                   <IconButton
-                    onClick={() => setShowPasswords({ ...showPasswords, current: !showPasswords.current })}
-                    edge="end"
+                    onClick={() => setShowPasswords(prev => ({ ...prev, current: !prev.current }))}
                   >
                     {showPasswords.current ? <VisibilityOffIcon /> : <VisibilityIcon />}
                   </IconButton>
@@ -919,15 +684,14 @@ const Profile: React.FC = () => {
             />
             <TextField
               label="New Password"
-              type={showPasswords.new ? 'text' : 'password'}
-              fullWidth
+              type={showPasswords.new ? "text" : "password"}
               value={passwordForm.newPassword}
-              onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+              onChange={(e) => setPasswordForm(prev => ({ ...prev, newPassword: e.target.value }))}
+              fullWidth
               InputProps={{
                 endAdornment: (
                   <IconButton
-                    onClick={() => setShowPasswords({ ...showPasswords, new: !showPasswords.new })}
-                    edge="end"
+                    onClick={() => setShowPasswords(prev => ({ ...prev, new: !prev.new }))}
                   >
                     {showPasswords.new ? <VisibilityOffIcon /> : <VisibilityIcon />}
                   </IconButton>
@@ -936,15 +700,14 @@ const Profile: React.FC = () => {
             />
             <TextField
               label="Confirm New Password"
-              type={showPasswords.confirm ? 'text' : 'password'}
-              fullWidth
+              type={showPasswords.confirm ? "text" : "password"}
               value={passwordForm.confirmPassword}
-              onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+              onChange={(e) => setPasswordForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
+              fullWidth
               InputProps={{
                 endAdornment: (
                   <IconButton
-                    onClick={() => setShowPasswords({ ...showPasswords, confirm: !showPasswords.confirm })}
-                    edge="end"
+                    onClick={() => setShowPasswords(prev => ({ ...prev, confirm: !prev.confirm }))}
                   >
                     {showPasswords.confirm ? <VisibilityOffIcon /> : <VisibilityIcon />}
                   </IconButton>
@@ -954,21 +717,35 @@ const Profile: React.FC = () => {
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setPasswordDialog(false)}>Cancel</Button>
-          <Button
-            onClick={handleChangePassword}
-            variant="contained"
-            disabled={saving || !passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword}
-          >
-            Change Password
+          <Button onClick={() => setChangePasswordOpen(false)}>Cancel</Button>
+          <Button onClick={handleChangePassword} variant="contained" disabled={saving}>
+            {saving ? 'Changing...' : 'Change Password'}
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Success/Error Messages */}
+      <Snackbar
+        open={!!successMessage}
+        autoHideDuration={6000}
+        onClose={() => setSuccessMessage(null)}
+      >
+        <Alert onClose={() => setSuccessMessage(null)} severity="success">
+          {successMessage}
+        </Alert>
+      </Snackbar>
+
+      <Snackbar
+        open={!!error}
+        autoHideDuration={6000}
+        onClose={() => setError(null)}
+      >
+        <Alert onClose={() => setError(null)} severity="error">
+          {error}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };
 
 export default Profile;
-
-// Module export to prevent TS1208 isolatedModules warnings
-export {};

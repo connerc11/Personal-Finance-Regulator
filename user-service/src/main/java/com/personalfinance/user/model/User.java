@@ -51,6 +51,9 @@ public class User {
     @Column(length = 20)
     private String phoneNumber;
     
+    @Column(length = 255)
+    private String avatarUrl;
+    
     @Enumerated(EnumType.STRING)
     @Column(length = 20)
     private Role role = Role.USER;
@@ -96,6 +99,9 @@ public class User {
     
     public String getPhoneNumber() { return phoneNumber; }
     public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
+    
+    public String getAvatarUrl() { return avatarUrl; }
+    public void setAvatarUrl(String avatarUrl) { this.avatarUrl = avatarUrl; }
     
     public Role getRole() { return role; }
     public void setRole(Role role) { this.role = role; }
