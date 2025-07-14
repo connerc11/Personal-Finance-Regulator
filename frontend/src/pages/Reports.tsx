@@ -72,23 +72,47 @@ const Reports: React.FC = () => {
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [goals, setGoals] = useState<FinancialGoal[]>([]);
 
+  // Clear all cached data and reset state
+  const resetReportsData = () => {
+    setTransactions([]);
+    setBudgets([]);
+    setGoals([]);
+    setError(null);
+    setTabValue(0);
+    setTimeRange('6months');
+  };
+
   // Load user data on component mount
   useEffect(() => {
     if (user?.id) {
       loadUserData();
+    } else {
+      // Clear data when no user is logged in
+      resetReportsData();
+      setLoading(false);
     }
   }, [user?.id, timeRange]);
+
+  // Reset data when user changes (including switching between demo and new users)
+  useEffect(() => {
+    resetReportsData();
+  }, [user?.id]);
 
   const loadUserData = async () => {
     try {
       setLoading(true);
       setError(null);
+      
+      // Clear existing data first to prevent showing old data
+      setTransactions([]);
+      setBudgets([]);
+      setGoals([]);
 
-      // Load transactions, budgets, and goals in parallel
+      // Load transactions, budgets, and goals in parallel with proper user isolation
       const [transactionsRes, budgetsRes, goalsRes] = await Promise.all([
-        transactionAPI.getAll(),
+        transactionAPI.getAll(user?.id || 1),
         budgetAPI.getAll(user?.id || 1),
-        goalsAPI.getAll(),
+        goalsAPI.getAll(user?.id || 1),
       ]);
 
       if (transactionsRes.success) {
@@ -129,7 +153,7 @@ const Reports: React.FC = () => {
 
     // Process spending by category
     const categorySpending = filteredTransactions
-      .filter(t => t.type === 'expense')
+      .filter(t => t.type === 'EXPENSE')
       .reduce((acc, t) => {
         acc[t.category] = (acc[t.category] || 0) + t.amount;
         return acc;
@@ -148,7 +172,7 @@ const Reports: React.FC = () => {
       if (!acc[month]) {
         acc[month] = { month, income: 0, expenses: 0, savings: 0 };
       }
-      if (t.type === 'income') {
+      if (t.type === 'INCOME') {
         acc[month].income += t.amount;
       } else {
         acc[month].expenses += t.amount;
@@ -338,7 +362,7 @@ const Reports: React.FC = () => {
                         outerRadius={80}
                         fill="#8884d8"
                         dataKey="value"
-                        label={({ name, percent }) => `${name} ${percent ? (percent * 100).toFixed(0) : 0}%`}
+                        label={({ name, percent }: any) => `${name} ${percent ? (percent * 100).toFixed(0) : 0}%`}
                       >
                         {spendingData.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={entry.color} />
@@ -414,7 +438,7 @@ const Reports: React.FC = () => {
                   <BarChart data={monthlyTrends}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#333" />
                     <XAxis dataKey="month" stroke="#888" />
-                    <YAxis stroke="#888" tickFormatter={(value) => `$${value.toLocaleString()}`} />
+                    <YAxis stroke="#888" tickFormatter={(value: any) => `$${value.toLocaleString()}`} />
                     <Tooltip 
                       contentStyle={{ 
                         backgroundColor: '#1a1a1a', 
@@ -454,7 +478,7 @@ const Reports: React.FC = () => {
                   <LineChart data={netWorthData}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#333" />
                     <XAxis dataKey="month" stroke="#888" />
-                    <YAxis stroke="#888" tickFormatter={(value) => `$${value.toLocaleString()}`} />
+                    <YAxis stroke="#888" tickFormatter={(value: any) => `$${value.toLocaleString()}`} />
                     <Tooltip 
                       contentStyle={{ 
                         backgroundColor: '#1a1a1a', 

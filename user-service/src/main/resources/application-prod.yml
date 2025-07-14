@@ -1,39 +1,27 @@
-server:
-  port: 8081
-
+# Production Profile (uses PostgreSQL)
 spring:
-  application:
-    name: user-service
+  profiles:
+    active: prod
   datasource:
     url: jdbc:postgresql://localhost:5432/personalfinance_db
     driverClassName: org.postgresql.Driver
     username: personalfinance_user
     password: personalfinance_pass
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+      connection-timeout: 20000
   jpa:
-    show-sql: true
     hibernate:
       ddl-auto: update
     database-platform: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: false
     properties:
       hibernate:
-        format_sql: true
+        format_sql: false
         default_schema: public
-
-jwt:
-  secret: mySecretKey
-  expiration: 86400000 # 24 hours
-
-personalfinance:
-  app:
-    jwtSecret: personalFinanceSecretKey
-    jwtExpirationMs: 86400000
 
 logging:
   level:
-    com.personalfinance.user: DEBUG
-
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info
+    com.personalfinance: INFO
+    org.springframework.security: INFO
