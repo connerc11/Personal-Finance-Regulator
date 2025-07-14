@@ -10,8 +10,8 @@ const sampleBudgets: Budget[] = [
     category: 'Groceries',
     amount: 400,
     spent: 250,
-    period: 'monthly',
-    userId: 1,
+    period: 'MONTHLY',
+    userId: 999,
     startDate: '2025-07-01',
     endDate: '2025-07-31',
   },
@@ -21,8 +21,8 @@ const sampleBudgets: Budget[] = [
     category: 'Entertainment',
     amount: 200,
     spent: 150,
-    period: 'monthly',
-    userId: 1,
+    period: 'MONTHLY',
+    userId: 999,
     startDate: '2025-07-01',
     endDate: '2025-07-31',
   },
@@ -32,8 +32,8 @@ const sampleBudgets: Budget[] = [
     category: 'Transportation',
     amount: 300,
     spent: 225,
-    period: 'monthly',
-    userId: 1,
+    period: 'MONTHLY',
+    userId: 999,
     startDate: '2025-07-01',
     endDate: '2025-07-31',
   },
@@ -43,8 +43,8 @@ const sampleBudgets: Budget[] = [
     category: 'Food',
     amount: 500,
     spent: 350,
-    period: 'monthly',
-    userId: 1,
+    period: 'MONTHLY',
+    userId: 999,
     startDate: '2025-07-01',
     endDate: '2025-07-31',
   },
@@ -54,26 +54,35 @@ const sampleBudgets: Budget[] = [
     category: 'Shopping',
     amount: 400,
     spent: 300,
-    period: 'monthly',
-    userId: 1,
+    period: 'MONTHLY',
+    userId: 999,
     startDate: '2025-07-01',
     endDate: '2025-07-31',
   },
 ];
 
-// Initialize localStorage with sample data if empty
-const initializeData = () => {
+// Initialize localStorage with sample data if empty (only for demo user)
+const initializeDemoData = () => {
+  // Only initialize sample data if this is for the demo user (ID 999)
+  // For new users, we want an empty budget list
   const stored = localStorage.getItem(BUDGETS_STORAGE_KEY);
   if (!stored) {
-    localStorage.setItem(BUDGETS_STORAGE_KEY, JSON.stringify(sampleBudgets));
+    // Initialize empty array instead of sample data
+    localStorage.setItem(BUDGETS_STORAGE_KEY, JSON.stringify([]));
   }
+};
+
+// Initialize demo data specifically for demo user
+export const initializeBudgetDemoData = () => {
+  // Force set sample data for demo user
+  localStorage.setItem(BUDGETS_STORAGE_KEY, JSON.stringify(sampleBudgets));
 };
 
 // Mock API service that simulates backend responses while using localStorage
 export const mockBudgetAPI = {
   getAll: async (): Promise<ApiResponse<Budget[]>> => {
-    // Initialize data if needed
-    initializeData();
+    // Initialize empty data for new users
+    initializeDemoData();
     
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 500));

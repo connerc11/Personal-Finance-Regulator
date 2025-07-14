@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Clear Personal Finance Data</title>
+</head>
+<body>
+    <h1>Personal Finance Data Cleaner</h1>
+    <button onclick="clearAllData()">Clear All localStorage Data</button>
+    <button onclick="showCurrentData()">Show Current Data</button>
+    <div id="output"></div>
+    
+    <script>
+        function clearAllData() {
+            // Clear all personal finance related localStorage items
+            const keys = Object.keys(localStorage);
+            const pfKeys = keys.filter(key => 
+                key.includes('personal_finance') || 
+                key.includes('personalfinance') ||
+                key.includes('auth') ||
+                key.includes('user')
+            );
+            
+            console.log('Found keys to clear:', pfKeys);
+            
+            pfKeys.forEach(key => {
+                console.log('Clearing:', key);
+                localStorage.removeItem(key);
+            });
+            
+            document.getElementById('output').innerHTML = 
+                '<p style="color: green;">Cleared ' + pfKeys.length + ' localStorage items: ' + pfKeys.join(', ') + '</p>';
+        }
+        
+        function showCurrentData() {
+            const keys = Object.keys(localStorage);
+            const pfKeys = keys.filter(key => 
+                key.includes('personal_finance') || 
+                key.includes('personalfinance') ||
+                key.includes('auth') ||
+                key.includes('user')
+            );
+            
+            let output = '<h3>Current localStorage Data:</h3>';
+            pfKeys.forEach(key => {
+                const value = localStorage.getItem(key);
+                output += '<div style="margin: 10px; padding: 10px; border: 1px solid #ccc;"><strong>' + key + ':</strong><br><pre>' + value + '</pre></div>';
+            });
+            
+            if (pfKeys.length === 0) {
+                output += '<p>No personal finance data found in localStorage</p>';
+            }
+            
+            document.getElementById('output').innerHTML = output;
+        }
+        
+        // Show current data on load
+        showCurrentData();
+    </script>
+</body>
+</html>

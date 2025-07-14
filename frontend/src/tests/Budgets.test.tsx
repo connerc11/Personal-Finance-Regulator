@@ -38,7 +38,7 @@ const mockBudgets: Budget[] = [
     category: 'Food & Dining',
     amount: 500,
     spent: 300,
-    period: 'monthly',
+    period: 'MONTHLY',
     startDate: '2025-01-01',
     endDate: '2025-01-31',
     userId: 1,
@@ -49,7 +49,7 @@ const mockBudgets: Budget[] = [
     category: 'Transportation',
     amount: 300,
     spent: 350,
-    period: 'monthly',
+    period: 'MONTHLY',
     startDate: '2025-01-01',
     endDate: '2025-01-31',
     userId: 1,
@@ -244,7 +244,7 @@ describe('Budgets Page', () => {
       await userEvent.type(screen.getByLabelText(/budget name/i), 'Entertainment');
       await userEvent.type(screen.getByLabelText(/amount/i), '200');
       await userEvent.selectOptions(screen.getByLabelText(/category/i), 'Entertainment');
-      await userEvent.selectOptions(screen.getByLabelText(/period/i), 'monthly');
+      await userEvent.selectOptions(screen.getByLabelText(/period/i), 'MONTHLY');
 
       // Submit form
       const createButton = screen.getByRole('button', { name: /create budget/i });
@@ -255,7 +255,7 @@ describe('Budgets Page', () => {
           name: 'Entertainment',
           amount: 200,
           category: 'Entertainment',
-          period: 'monthly',
+          period: 'MONTHLY',
           userId: 1,
           spent: 0,
           startDate: expect.any(String),
@@ -388,7 +388,7 @@ describe('Budgets Page', () => {
       await userEvent.type(screen.getByLabelText(/budget name/i), 'Test Budget');
       await userEvent.type(screen.getByLabelText(/amount/i), '100');
       await userEvent.selectOptions(screen.getByLabelText(/category/i), 'Other');
-      await userEvent.selectOptions(screen.getByLabelText(/period/i), 'monthly');
+      await userEvent.selectOptions(screen.getByLabelText(/period/i), 'MONTHLY');
 
       // Now button should be enabled
       expect(createButton).not.toBeDisabled();
@@ -445,7 +445,7 @@ describe('Budgets Page', () => {
       await userEvent.type(screen.getByLabelText(/budget name/i), 'Test Budget');
       await userEvent.type(screen.getByLabelText(/amount/i), '100');
       await userEvent.selectOptions(screen.getByLabelText(/category/i), 'Other');
-      await userEvent.selectOptions(screen.getByLabelText(/period/i), 'monthly');
+      await userEvent.selectOptions(screen.getByLabelText(/period/i), 'MONTHLY');
 
       // Submit form
       const createButton = screen.getByRole('button', { name: /create budget/i });

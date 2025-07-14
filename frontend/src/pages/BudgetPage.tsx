@@ -27,16 +27,21 @@ import {
   CheckCircle as CheckCircleIcon,
 } from '@mui/icons-material';
 import { Budget } from '../types';
+import { budgetAPI } from '../services/apiService';
+import { useAuth } from '../contexts/AuthContext';
 
 const BudgetPage: React.FC = () => {
+  const { user } = useAuth();
   const [budgets, setBudgets] = useState<Budget[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
   const [editingBudget, setEditingBudget] = useState<Budget | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     category: '',
     amount: '',
-    period: 'monthly' as Budget['period'],
+    period: 'MONTHLY' as Budget['period'],
     startDate: '',
     endDate: '',
   });
@@ -55,56 +60,31 @@ const BudgetPage: React.FC = () => {
     'Other',
   ];
 
-  // Mock data - in a real app, this would come from an API
+  // Load budgets from API
   useEffect(() => {
-    const mockBudgets: Budget[] = [
-      {
-        id: 1,
-        name: 'Groceries Budget',
-        category: 'Food & Dining',
-        amount: 800,
-        spent: 520,
-        period: 'monthly',
-        startDate: '2024-01-01',
-        endDate: '2024-01-31',
-        userId: 1,
-      },
-      {
-        id: 2,
-        name: 'Entertainment Fund',
-        category: 'Entertainment',
-        amount: 300,
-        spent: 280,
-        period: 'monthly',
-        startDate: '2024-01-01',
-        endDate: '2024-01-31',
-        userId: 1,
-      },
-      {
-        id: 3,
-        name: 'Transportation Budget',
-        category: 'Transportation',
-        amount: 400,
-        spent: 150,
-        period: 'monthly',
-        startDate: '2024-01-01',
-        endDate: '2024-01-31',
-        userId: 1,
-      },
-      {
-        id: 4,
-        name: 'Annual Vacation Fund',
-        category: 'Travel',
-        amount: 5000,
-        spent: 1200,
-        period: 'yearly',
-        startDate: '2024-01-01',
-        endDate: '2024-12-31',
-        userId: 1,
-      },
-    ];
-    setBudgets(mockBudgets);
-  }, []);
+    const loadBudgets = async () => {
+      if (!user?.id) return;
+      
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await budgetAPI.getAll(user.id);
+        
+        if (response.success) {
+          setBudgets(response.data);
+        } else {
+          setError(response.message || 'Failed to load budgets');
+        }
+      } catch (error) {
+        console.error('Error loading budgets:', error);
+        setError('Failed to load budgets. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadBudgets();
+  }, [user]);
 
   const handleOpenDialog = (budget?: Budget) => {
     if (budget) {
@@ -123,7 +103,7 @@ const BudgetPage: React.FC = () => {
         name: '',
         category: '',
         amount: '',
-        period: 'monthly',
+        period: 'MONTHLY',
         startDate: '',
         endDate: '',
       });
@@ -199,8 +179,24 @@ const BudgetPage: React.FC = () => {
   const totalSpent = budgets.reduce((sum, budget) => sum + budget.spent, 0);
   const remainingBudget = totalBudgeted - totalSpent;
 
+  // Loading state
+  if (loading) {
+    return (
+      <Box sx={{ p: 3, display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh' }}>
+        <Typography>Loading budgets...</Typography>
+      </Box>
+    );
+  }
+
   return (
     <Box sx={{ p: 3 }}>
+      {/* Error Alert */}
+      {error && (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {error}
+        </Alert>
+      )}
+
       {/* Header */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h4" sx={{ fontWeight: 'bold', color: 'primary.main' }}>

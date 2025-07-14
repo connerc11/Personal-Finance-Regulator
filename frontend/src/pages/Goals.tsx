@@ -151,7 +151,7 @@ const Goals: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await goalsAPI.getAll();
+      const response = await goalsAPI.getAll(user?.id);
       
       if (response.success) {
         // Calculate additional fields

@@ -2,6 +2,61 @@ import { FinancialGoal, ApiResponse } from '../types';
 
 const GOALS_STORAGE_KEY = 'personal_finance_goals';
 
+// Sample goals data
+const sampleGoals: FinancialGoal[] = [
+  {
+    id: 1,
+    title: 'Emergency Fund',
+    description: 'Build a 6-month emergency fund',
+    targetAmount: 12000,
+    currentAmount: 8500,
+    targetDate: '2025-12-31',
+    category: 'Emergency Fund',
+    priority: 'high',
+    isCompleted: false,
+    createdAt: '2025-01-01T00:00:00.000Z',
+    progress: 70.8,
+    monthlySavingsNeeded: 875,
+    userId: 999
+  },
+  {
+    id: 2,
+    title: 'New Car Fund',
+    description: 'Save for a reliable used car',
+    targetAmount: 15000,
+    currentAmount: 5000,
+    targetDate: '2026-06-30',
+    category: 'Car Purchase',
+    priority: 'medium',
+    isCompleted: false,
+    createdAt: '2025-01-01T00:00:00.000Z',
+    progress: 33.3,
+    monthlySavingsNeeded: 556,
+    userId: 999
+  },
+  {
+    id: 3,
+    title: 'Vacation Fund',
+    description: 'European vacation for 2 weeks',
+    targetAmount: 8000,
+    currentAmount: 2500,
+    targetDate: '2025-08-01',
+    category: 'Vacation/Travel',
+    priority: 'low',
+    isCompleted: false,
+    createdAt: '2025-01-01T00:00:00.000Z',
+    progress: 31.25,
+    monthlySavingsNeeded: 917,
+    userId: 999
+  }
+];
+
+// Initialize demo data specifically for demo user
+export const initializeGoalsDemoData = () => {
+  // Force set sample data for demo user
+  localStorage.setItem(GOALS_STORAGE_KEY, JSON.stringify(sampleGoals));
+};
+
 // Mock API service that simulates backend responses while using localStorage
 export const mockGoalsAPI = {
   getAll: async (): Promise<ApiResponse<FinancialGoal[]>> => {

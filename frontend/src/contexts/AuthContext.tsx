@@ -11,6 +11,10 @@ interface AuthProviderProps {
 const USERS_STORAGE_KEY = 'personalfinance_users';
 const CURRENT_USER_KEY = 'personalfinance_current_user';
 const TOKEN_KEY = 'personalfinance_token';
+const SESSION_EXPIRY_KEY = 'personalfinance_session_expiry';
+
+// Session timeout: 1 hour
+const SESSION_TIMEOUT = 60 * 60 * 1000; // 1 hour in milliseconds
 
 // User database interface
 interface UserAccount extends User {
@@ -29,10 +33,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Check for stored token and user on app start
     const storedToken = localStorage.getItem(TOKEN_KEY);
     const storedUser = localStorage.getItem(CURRENT_USER_KEY);
+    const storedExpiry = localStorage.getItem(SESSION_EXPIRY_KEY);
     
-    if (storedToken && storedUser) {
-      setToken(storedToken);
-      setUser(JSON.parse(storedUser));
+    if (storedToken && storedUser && storedExpiry) {
+      const expiryDate = new Date(storedExpiry);
+      
+      // Check if session is still valid
+      if (expiryDate > new Date()) {
+        setToken(storedToken);
+        setUser(JSON.parse(storedUser));
+      } else {
+        // Session expired
+        logout();
+      }
     }
     setIsLoading(false);
   }, []);
@@ -112,6 +125,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setToken(authToken);
       localStorage.setItem(TOKEN_KEY, authToken);
       localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(authenticatedUser));
+      localStorage.setItem(SESSION_EXPIRY_KEY, new Date(Date.now() + SESSION_TIMEOUT).toISOString());
     } catch (error) {
       throw error;
     } finally {
@@ -165,6 +179,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setToken(authToken);
       localStorage.setItem(TOKEN_KEY, authToken);
       localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(authenticatedUser));
+      localStorage.setItem(SESSION_EXPIRY_KEY, new Date(Date.now() + SESSION_TIMEOUT).toISOString());
     } catch (error) {
       throw error;
     } finally {
@@ -177,6 +192,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setToken(null);
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(CURRENT_USER_KEY);
+    localStorage.removeItem(SESSION_EXPIRY_KEY);
   };
 
   const value: AuthContextType = {

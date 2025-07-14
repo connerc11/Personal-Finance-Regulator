@@ -24,10 +24,15 @@ import {
   Card,
   CardContent,
   LinearProgress,
+  Alert,
+  CircularProgress,
+  Grid,
+  Divider,
 } from '@mui/material';
-import { Add, Edit, Delete, AccountBalanceWallet } from '@mui/icons-material';
+import { Add, Edit, Delete, AccountBalanceWallet, AutoAwesome, TrendingUp, Psychology } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { budgetAPI, transactionAPI } from '../services/apiService';
+import { budgetAIService, BudgetRecommendation, BudgetAnalysis } from '../services/budgetAIService';
 import { Budget, Transaction, BudgetCreateRequest, BudgetUpdateRequest } from '../types';
 
 // Remove localStorage usage - data comes from backend API
@@ -46,6 +51,12 @@ const Budgets: React.FC = () => {
     startDate: new Date().toISOString().split('T')[0],
     endDate: '',
   });
+
+  // AI Budget Generation state
+  const [showAIRecommendations, setShowAIRecommendations] = useState(false);
+  const [aiAnalysis, setAiAnalysis] = useState<BudgetAnalysis | null>(null);
+  const [loadingAI, setLoadingAI] = useState(false);
+  const [selectedRecommendations, setSelectedRecommendations] = useState<Set<string>>(new Set());
 
   // Budget categories
   const budgetCategories = [
@@ -168,13 +179,77 @@ const Budgets: React.FC = () => {
     return end.toISOString().split('T')[0];
   };
 
-  // Update end date when period or start date changes
-  useEffect(() => {
-    if (formData.startDate && formData.period) {
-      const newEndDate = calculateEndDate(formData.startDate, formData.period);
-      setFormData(prev => ({ ...prev, endDate: newEndDate }));
+  // AI Budget Generation Functions
+  const generateAIBudgets = async () => {
+    if (!user) return;
+    
+    setLoadingAI(true);
+    try {
+      const analysis = await budgetAIService.generateBudgetRecommendations(user.id);
+      setAiAnalysis(analysis);
+      setShowAIRecommendations(true);
+      
+      // Pre-select recommendations with high confidence
+      const highConfidenceRecs = new Set(
+        analysis.recommendations
+          .filter(rec => rec.confidence >= 0.7)
+          .map(rec => rec.category)
+      );
+      setSelectedRecommendations(highConfidenceRecs);
+    } catch (error) {
+      console.error('Error generating AI budgets:', error);
+    } finally {
+      setLoadingAI(false);
     }
-  }, [formData.startDate, formData.period]);
+  };
+
+  const toggleRecommendationSelection = (category: string) => {
+    const newSelection = new Set(selectedRecommendations);
+    if (newSelection.has(category)) {
+      newSelection.delete(category);
+    } else {
+      newSelection.add(category);
+    }
+    setSelectedRecommendations(newSelection);
+  };
+
+  const createBudgetsFromAI = async () => {
+    if (!user || !aiAnalysis) return;
+    
+    const selectedRecs = aiAnalysis.recommendations.filter(rec => 
+      selectedRecommendations.has(rec.category)
+    );
+
+    for (const rec of selectedRecs) {
+      try {
+        const budgetData: BudgetCreateRequest = {
+          name: `${rec.category} Budget (AI Generated)`,
+          category: rec.category,
+          amount: rec.recommendedAmount,
+          period: 'MONTHLY',
+          startDate: new Date().toISOString().split('T')[0],
+          endDate: calculateEndDate(new Date().toISOString().split('T')[0], 'MONTHLY'),
+          userId: user.id,
+        };
+
+        await budgetAPI.create(budgetData);
+      } catch (error) {
+        console.error(`Error creating budget for ${rec.category}:`, error);
+      }
+    }
+
+    // Reload budgets to show new ones
+    if (user) {
+      const budgetsResponse = await budgetAPI.getAll(user.id);
+      if (budgetsResponse.success) {
+        setBudgets(budgetsResponse.data);
+      }
+    }
+
+    // Close AI recommendations dialog
+    setShowAIRecommendations(false);
+    setSelectedRecommendations(new Set());
+  };
 
   const handleSubmit = async () => {
     const amount = parseFloat(formData.amount);
@@ -307,6 +382,7 @@ const Budgets: React.FC = () => {
             backgroundColor: '#00ff88',
             color: '#000',
             fontWeight: 'bold',
+            mr: 2,
             '&:hover': {
               backgroundColor: '#00cc6a',
               boxShadow: '0 0 20px rgba(0, 255, 136, 0.5)',
@@ -314,6 +390,24 @@ const Budgets: React.FC = () => {
           }}
         >
           Add Budget
+        </Button>
+        <Button
+          variant="outlined"
+          startIcon={loadingAI ? <CircularProgress size={20} color="inherit" /> : <AutoAwesome />}
+          onClick={generateAIBudgets}
+          disabled={loadingAI}
+          sx={{
+            borderColor: '#00ff88',
+            color: '#00ff88',
+            fontWeight: 'bold',
+            '&:hover': {
+              borderColor: '#00cc6a',
+              backgroundColor: 'rgba(0, 255, 136, 0.1)',
+              boxShadow: '0 0 20px rgba(0, 255, 136, 0.3)',
+            },
+          }}
+        >
+          {loadingAI ? 'Generating...' : 'AI Budget Assistant'}
         </Button>
       </Box>
 
@@ -352,22 +446,41 @@ const Budgets: React.FC = () => {
             >
               Create your first budget to track your spending goals. Your spending will be automatically calculated from your transactions.
             </Typography>
-            <Button
-              variant="contained"
-              startIcon={<Add />}
-              onClick={() => setOpen(true)}
-              sx={{
-                backgroundColor: '#00ff88',
-                color: '#000',
-                fontWeight: 'bold',
-                '&:hover': {
-                  backgroundColor: '#00cc6a',
-                  boxShadow: '0 0 20px rgba(0, 255, 136, 0.5)',
-                },
-              }}
-            >
-              Create Budget
-            </Button>
+            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
+              <Button
+                variant="contained"
+                startIcon={<Add />}
+                onClick={() => setOpen(true)}
+                sx={{
+                  backgroundColor: '#00ff88',
+                  color: '#000',
+                  fontWeight: 'bold',
+                  '&:hover': {
+                    backgroundColor: '#00cc6a',
+                    boxShadow: '0 0 20px rgba(0, 255, 136, 0.5)',
+                  },
+                }}
+              >
+                Create Budget
+              </Button>
+              <Button
+                variant="outlined"
+                startIcon={loadingAI ? <CircularProgress size={20} color="inherit" /> : <Psychology />}
+                onClick={generateAIBudgets}
+                disabled={loadingAI}
+                sx={{
+                  borderColor: '#00ff88',
+                  color: '#00ff88',
+                  fontWeight: 'bold',
+                  '&:hover': {
+                    borderColor: '#00cc6a',
+                    backgroundColor: 'rgba(0, 255, 136, 0.1)',
+                  },
+                }}
+              >
+                {loadingAI ? 'Analyzing...' : 'Smart Budget Setup'}
+              </Button>
+            </Box>
           </CardContent>
         </Card>
       ) : (
@@ -839,6 +952,162 @@ const Budgets: React.FC = () => {
             }}
           >
             {editingBudget ? 'Update' : 'Add'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* AI Budget Recommendations Dialog */}
+      <Dialog
+        open={showAIRecommendations}
+        onClose={() => setShowAIRecommendations(false)}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          sx: {
+            backgroundColor: '#1a1a1a',
+            color: '#fff',
+            border: '1px solid rgba(0, 255, 136, 0.3)',
+            borderRadius: 2,
+            boxShadow: '0 0 30px rgba(0, 255, 136, 0.2)',
+          }
+        }}
+      >
+        <DialogTitle sx={{ 
+          borderBottom: '1px solid rgba(0, 255, 136, 0.3)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1,
+        }}>
+          <AutoAwesome sx={{ color: '#00ff88' }} />
+          AI Budget Recommendations
+        </DialogTitle>
+        
+        <DialogContent sx={{ mt: 2 }}>
+          {aiAnalysis && (
+            <>
+              {/* Analysis Summary */}
+              <Alert 
+                severity="info" 
+                sx={{ 
+                  mb: 3,
+                  backgroundColor: 'rgba(0, 255, 136, 0.1)',
+                  color: '#fff',
+                  border: '1px solid rgba(0, 255, 136, 0.3)',
+                  '& .MuiAlert-icon': { color: '#00ff88' }
+                }}
+              >
+                <Typography variant="body2">
+                  Based on your spending history: Monthly income ${aiAnalysis.totalIncome.toLocaleString()}, 
+                  expenses ${aiAnalysis.totalExpenses.toLocaleString()}, 
+                  savings rate {aiAnalysis.savingsRate}%
+                </Typography>
+              </Alert>
+
+              {/* Recommendations Grid */}
+              <Typography variant="h6" gutterBottom sx={{ color: '#00ff88', mb: 2 }}>
+                Recommended Budgets
+              </Typography>
+              
+              <Grid container spacing={2}>
+                {aiAnalysis.recommendations.map((rec) => (
+                  <Grid item xs={12} sm={6} key={rec.category}>
+                    <Card
+                      sx={{
+                        backgroundColor: selectedRecommendations.has(rec.category) 
+                          ? 'rgba(0, 255, 136, 0.1)' 
+                          : 'rgba(30, 30, 30, 0.9)',
+                        border: selectedRecommendations.has(rec.category)
+                          ? '2px solid #00ff88'
+                          : '1px solid rgba(255, 255, 255, 0.1)',
+                        borderRadius: 2,
+                        cursor: 'pointer',
+                        transition: 'all 0.3s ease',
+                        '&:hover': {
+                          borderColor: '#00ff88',
+                          backgroundColor: 'rgba(0, 255, 136, 0.05)',
+                        }
+                      }}
+                      onClick={() => toggleRecommendationSelection(rec.category)}
+                    >
+                      <CardContent>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+                          <Typography variant="h6" sx={{ color: '#fff', fontWeight: 'bold' }}>
+                            {rec.category}
+                          </Typography>
+                          <Chip
+                            label={`${Math.round(rec.confidence * 100)}% confidence`}
+                            size="small"
+                            sx={{
+                              backgroundColor: rec.confidence >= 0.8 ? '#4caf50' : 
+                                             rec.confidence >= 0.6 ? '#ff9800' : '#f44336',
+                              color: '#fff',
+                              fontWeight: 'bold'
+                            }}
+                          />
+                        </Box>
+                        
+                        <Typography variant="h5" sx={{ color: '#00ff88', fontWeight: 'bold', mb: 1 }}>
+                          ${rec.recommendedAmount.toLocaleString()}/month
+                        </Typography>
+                        
+                        {rec.averageSpending > 0 && (
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                            <TrendingUp 
+                              sx={{ 
+                                color: rec.spendingTrend === 'increasing' ? '#f44336' : 
+                                       rec.spendingTrend === 'decreasing' ? '#4caf50' : '#888',
+                                fontSize: 16 
+                              }} 
+                            />
+                            <Typography variant="body2" sx={{ color: '#888' }}>
+                              Avg: ${rec.averageSpending.toLocaleString()}/month ({rec.spendingTrend})
+                            </Typography>
+                          </Box>
+                        )}
+                        
+                        <Typography variant="body2" sx={{ color: '#ccc', fontSize: '0.85em' }}>
+                          {rec.reasoning}
+                        </Typography>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                ))}
+              </Grid>
+
+              {aiAnalysis.recommendations.length === 0 && (
+                <Alert severity="warning" sx={{ backgroundColor: 'rgba(255, 152, 0, 0.1)', color: '#fff' }}>
+                  <Typography variant="body1">
+                    Not enough transaction history to generate recommendations. 
+                    Try adding some transactions first, or create budgets manually.
+                  </Typography>
+                </Alert>
+              )}
+            </>
+          )}
+        </DialogContent>
+
+        <DialogActions sx={{ borderTop: '1px solid rgba(0, 255, 136, 0.3)', p: 2 }}>
+          <Button 
+            onClick={() => setShowAIRecommendations(false)}
+            sx={{ color: '#888' }}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={createBudgetsFromAI}
+            disabled={selectedRecommendations.size === 0}
+            sx={{
+              backgroundColor: '#00ff88',
+              color: '#000',
+              fontWeight: 'bold',
+              '&:hover': {
+                backgroundColor: '#00cc6a',
+                boxShadow: '0 0 20px rgba(0, 255, 136, 0.5)',
+              },
+            }}
+          >
+            Create {selectedRecommendations.size} Budget{selectedRecommendations.size !== 1 ? 's' : ''}
           </Button>
         </DialogActions>
       </Dialog>

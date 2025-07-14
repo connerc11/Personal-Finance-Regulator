@@ -87,7 +87,7 @@ const Reports: React.FC = () => {
       // Load transactions, budgets, and goals in parallel
       const [transactionsRes, budgetsRes, goalsRes] = await Promise.all([
         transactionAPI.getAll(),
-        budgetAPI.getAll(),
+        budgetAPI.getAll(user?.id || 1),
         goalsAPI.getAll(),
       ]);
 

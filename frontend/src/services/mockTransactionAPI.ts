@@ -10,8 +10,8 @@ const sampleTransactions: Transaction[] = [
     category: 'Salary',
     description: 'Monthly salary',
     date: '2025-07-01',
-    type: 'income',
-    userId: 1,
+    type: 'INCOME',
+    userId: 999,
   },
   {
     id: 2,
@@ -19,8 +19,8 @@ const sampleTransactions: Transaction[] = [
     category: 'Rent',
     description: 'Monthly rent payment',
     date: '2025-07-02',
-    type: 'expense',
-    userId: 1,
+    type: 'EXPENSE',
+    userId: 999,
   },
   {
     id: 3,
@@ -28,8 +28,8 @@ const sampleTransactions: Transaction[] = [
     category: 'Groceries',
     description: 'Weekly grocery shopping',
     date: '2025-07-03',
-    type: 'expense',
-    userId: 1,
+    type: 'EXPENSE',
+    userId: 999,
   },
   {
     id: 4,
@@ -37,8 +37,8 @@ const sampleTransactions: Transaction[] = [
     category: 'Utilities',
     description: 'Electricity bill',
     date: '2025-07-04',
-    type: 'expense',
-    userId: 1,
+    type: 'EXPENSE',
+    userId: 999,
   },
   {
     id: 5,
@@ -46,8 +46,8 @@ const sampleTransactions: Transaction[] = [
     category: 'Entertainment',
     description: 'Movie tickets',
     date: '2025-07-05',
-    type: 'expense',
-    userId: 1,
+    type: 'EXPENSE',
+    userId: 999,
   },
   {
     id: 6,
@@ -55,8 +55,8 @@ const sampleTransactions: Transaction[] = [
     category: 'Food',
     description: 'Restaurant dinner',
     date: '2025-06-28',
-    type: 'expense',
-    userId: 1,
+    type: 'EXPENSE',
+    userId: 999,
   },
   {
     id: 7,
@@ -64,8 +64,8 @@ const sampleTransactions: Transaction[] = [
     category: 'Transportation',
     description: 'Gas',
     date: '2025-06-25',
-    type: 'expense',
-    userId: 1,
+    type: 'EXPENSE',
+    userId: 999,
   },
   {
     id: 8,
@@ -73,8 +73,8 @@ const sampleTransactions: Transaction[] = [
     category: 'Shopping',
     description: 'Clothing',
     date: '2025-06-20',
-    type: 'expense',
-    userId: 1,
+    type: 'EXPENSE',
+    userId: 999,
   },
   {
     id: 9,
@@ -82,8 +82,8 @@ const sampleTransactions: Transaction[] = [
     category: 'Salary',
     description: 'Monthly salary',
     date: '2025-06-01',
-    type: 'income',
-    userId: 1,
+    type: 'INCOME',
+    userId: 999,
   },
   {
     id: 10,
@@ -91,24 +91,33 @@ const sampleTransactions: Transaction[] = [
     category: 'Rent',
     description: 'Monthly rent payment',
     date: '2025-06-02',
-    type: 'expense',
-    userId: 1,
+    type: 'EXPENSE',
+    userId: 999,
   },
 ];
 
-// Initialize localStorage with sample data if empty
-const initializeData = () => {
+// Initialize localStorage with sample data if empty (only for demo user)
+const initializeDemoData = () => {
+  // Only initialize sample data if this is for the demo user (ID 999)
+  // For new users, we want an empty transaction list
   const stored = localStorage.getItem(TRANSACTIONS_STORAGE_KEY);
   if (!stored) {
-    localStorage.setItem(TRANSACTIONS_STORAGE_KEY, JSON.stringify(sampleTransactions));
+    // Initialize empty array instead of sample data
+    localStorage.setItem(TRANSACTIONS_STORAGE_KEY, JSON.stringify([]));
   }
+};
+
+// Initialize demo data specifically for demo user
+export const initializeTransactionDemoData = () => {
+  // Force set sample data for demo user
+  localStorage.setItem(TRANSACTIONS_STORAGE_KEY, JSON.stringify(sampleTransactions));
 };
 
 // Mock API service that simulates backend responses while using localStorage
 export const mockTransactionAPI = {
   getAll: async (): Promise<ApiResponse<Transaction[]>> => {
-    // Initialize data if needed
-    initializeData();
+    // Initialize empty data for new users
+    initializeDemoData();
     
     // Simulate API delay
     await new Promise(resolve => setTimeout(resolve, 500));

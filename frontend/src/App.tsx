@@ -6,6 +6,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import Layout from './components/Layout';
 import PrivateRoute from './components/PrivateRoute';
 import PublicRoute from './components/PublicRoute';
+import SessionManager from './components/SessionManager';
 import Dashboard from './pages/Dashboard';
 import Transactions from './pages/Transactions';
 import BudgetPage from './pages/BudgetPage';
@@ -36,6 +37,7 @@ function App() {
       <CssBaseline />
       <AuthProvider>
         <Router>
+          <SessionManager />
           <Routes>
             <Route path="/login" element={
               <PublicRoute>

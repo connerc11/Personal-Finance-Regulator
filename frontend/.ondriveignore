@@ -1,0 +1,5 @@
+﻿node_modules/
+*.log
+build/
+dist/
+.env.local

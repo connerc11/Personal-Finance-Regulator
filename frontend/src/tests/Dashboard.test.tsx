@@ -78,7 +78,7 @@ const mockBudgets = [
     category: 'Food & Dining',
     amount: 500,
     spent: 300,
-    period: 'monthly' as const,
+    period: 'MONTHLY' as const,
     startDate: '2025-01-01',
     endDate: '2025-01-31',
     userId: 1,
