@@ -42,9 +42,6 @@ import { useAuth } from '../contexts/AuthContext';
 import { goalsAPI } from '../services/apiService';
 import { FinancialGoal } from '../types';
 
-// TypeScript module declaration
-export type {};
-
 interface SavingsStrategy {
   id: string;
   title: string;

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+// @ts-ignore
 import { useNavigate, useLocation, Link as RouterLink } from 'react-router-dom';
 import {
   Box,

@@ -616,6 +616,3 @@ const ScheduledPurchases: React.FC = () => {
   };
 
 export default ScheduledPurchases;
-
-// Module export to prevent TS1208 isolatedModules warnings
-export {};

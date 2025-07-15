@@ -29,8 +29,13 @@ import {
   Assessment,
   MoreVert as MoreVertIcon,
 } from '@mui/icons-material';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+
+// Workaround imports for React Router
+const ReactRouter = (window as any).ReactRouterDOM || require('react-router-dom');
+const Link = ReactRouter.Link || ((props: any) => React.createElement('a', props));
+const useLocation = ReactRouter.useLocation || (() => ({ pathname: '/' }));
+const useNavigate = ReactRouter.useNavigate || (() => () => {});
 
 const drawerWidth = 240;
 

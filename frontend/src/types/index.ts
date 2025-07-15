@@ -108,6 +108,7 @@ export interface ScheduledPurchase {
 export interface AuthContextType {
   user: User | null;
   token: string | null;
+  isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (userData: RegisterData) => Promise<void>;
   logout: () => void;

@@ -1115,9 +1115,4 @@ const Budgets: React.FC = () => {
   );
 };
 
-// Export the component
-export { Budgets };
 export default Budgets;
-
-// Module export to prevent TS1208 isolatedModules warnings
-export {};

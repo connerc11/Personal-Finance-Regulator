@@ -26,6 +26,7 @@ import {
 } from '@mui/material';
 import { Add, Edit, Delete, AccountBalance } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
+import { transactionAPI } from '../services/apiService';
 
 interface Transaction {
   id: number;
@@ -36,8 +37,7 @@ interface Transaction {
   date: string;
 }
 
-// Local storage key for user transactions
-const TRANSACTIONS_KEY = 'personalfinance_transactions';
+
 
 const Transactions: React.FC = () => {
   const { user } = useAuth();
@@ -52,53 +52,59 @@ const Transactions: React.FC = () => {
     date: new Date().toISOString().split('T')[0],
   });
 
-  // Load transactions from localStorage on component mount
+
+  // Load transactions from backend API on component mount or user change
+  // Helper to map backend type to frontend type
+  const mapBackendToFrontend = (tx) => ({
+    ...tx,
+    type: tx.type === 'INCOME' ? 'income' : tx.type === 'EXPENSE' ? 'expense' : tx.type
+  });
+
+  // Helper to map frontend type to backend type
+  const mapFrontendToBackend = (tx) => ({
+    ...tx,
+    type: tx.type === 'income' ? 'INCOME' : tx.type === 'expense' ? 'EXPENSE' : tx.type
+  });
+
   useEffect(() => {
-    if (user) {
-      const storedTransactions = localStorage.getItem(`${TRANSACTIONS_KEY}_${user.id}`);
-      if (storedTransactions) {
-        setTransactions(JSON.parse(storedTransactions));
+    const fetchTransactions = async () => {
+      if (user) {
+        const response = await transactionAPI.getAll(user.id);
+        if (response.success) {
+          setTransactions(response.data.map(mapBackendToFrontend));
+        } else {
+          setTransactions([]);
+        }
+      } else {
+        setTransactions([]);
       }
-    }
+    };
+    fetchTransactions();
   }, [user]);
 
-  // Save transactions to localStorage whenever transactions change
-  useEffect(() => {
-    if (user && transactions.length >= 0) {
-      localStorage.setItem(`${TRANSACTIONS_KEY}_${user.id}`, JSON.stringify(transactions));
-    }
-  }, [transactions, user]);
-
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    if (!user) return;
     const amount = parseFloat(formData.amount);
-    // For expenses, make amount negative; for income, keep positive
     const finalAmount = formData.type === 'expense' ? -Math.abs(amount) : Math.abs(amount);
-    
-    let updatedTransactions;
-    
+
     if (editingTransaction) {
-      updatedTransactions = transactions.map(t => 
-        t.id === editingTransaction.id 
-          ? { ...editingTransaction, ...formData, amount: finalAmount }
-          : t
-      );
-    } else {
-      const newTransaction: Transaction = {
-        id: Date.now(),
+      // Update transaction in backend
+      await transactionAPI.update(editingTransaction.id, mapFrontendToBackend({
         ...formData,
         amount: finalAmount,
-      };
-      updatedTransactions = [...transactions, newTransaction];
+      }));
+    } else {
+      // Create new transaction in backend
+      await transactionAPI.create(mapFrontendToBackend({
+        ...formData,
+        amount: finalAmount,
+        userId: user.id,
+      }));
     }
-    
-    // Update state
-    setTransactions(updatedTransactions);
-    
-    // Immediately save to localStorage
-    if (user) {
-      localStorage.setItem(`${TRANSACTIONS_KEY}_${user.id}`, JSON.stringify(updatedTransactions));
-    }
-    
+
+    // Reload transactions from backend
+    const response = await transactionAPI.getAll(user.id);
+    setTransactions(response.success ? response.data.map(mapBackendToFrontend) : []);
     handleClose();
   };
 
@@ -126,14 +132,11 @@ const Transactions: React.FC = () => {
     setOpen(true);
   };
 
-  const handleDelete = (id: number) => {
-    const updatedTransactions = transactions.filter(t => t.id !== id);
-    setTransactions(updatedTransactions);
-    
-    // Immediately save to localStorage
-    if (user) {
-      localStorage.setItem(`${TRANSACTIONS_KEY}_${user.id}`, JSON.stringify(updatedTransactions));
-    }
+  const handleDelete = async (id: number) => {
+    if (!user) return;
+    await transactionAPI.delete(id);
+    const response = await transactionAPI.getAll(user.id);
+    setTransactions(response.success ? response.data.map(mapBackendToFrontend) : []);
   };
 
   return (

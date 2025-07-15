@@ -53,6 +53,7 @@ import {
   AutoAwesome as MagicIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
+import { transactionAPI, budgetAPI, scheduledPurchaseAPI } from '../services/apiService';
 import { ScheduledPurchase } from '../types';
 
 // Constants for localStorage keys
@@ -134,13 +135,15 @@ const CashCoach: React.FC = () => {
   const [feedbackDialog, setFeedbackDialog] = useState(false);
   const [selectedRecommendation, setSelectedRecommendation] = useState<AIRecommendation | null>(null);
 
-  // User-specific data from localStorage
+  // User-specific data from backend
   const [spendingPatterns, setSpendingPatterns] = useState<SpendingPattern[]>([]);
   const [aiRecommendations, setAiRecommendations] = useState<AIRecommendation[]>([]);
   const [aiInsights, setAiInsights] = useState<AIInsight[]>([]);
   const [coachingGoals, setCoachingGoals] = useState<CoachingGoal[]>([]);
   const [scheduledPurchases, setScheduledPurchases] = useState<ScheduledPurchase[]>([]);
   const [pastPurchases, setPastPurchases] = useState<PastPurchase[]>([]);
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [budgets, setBudgets] = useState<any[]>([]);
 
   // General financial suggestions (not user-specific)
   const generalSuggestions: CashCoachSuggestion[] = [
@@ -243,31 +246,45 @@ const CashCoach: React.FC = () => {
   ];
 
   // Load and analyze user data
+
   useEffect(() => {
-    if (user) {
-      loadUserData();
+    if (!user) {
+      setTransactions([]);
+      setBudgets([]);
+      setScheduledPurchases([]);
+      setPastPurchases([]);
+      setSpendingPatterns([]);
+      setAiRecommendations([]);
+      setAiInsights([]);
+      setCoachingGoals([]);
+      setLoading(false);
+      setAnalysisComplete(false);
+      return;
     }
+    loadUserData();
   }, [user]);
 
-  const loadUserData = () => {
+  const loadUserData = async () => {
+    if (!user) return;
     setLoading(true);
-    
     try {
-      // Get user transactions and budgets
-      const storedTransactions = localStorage.getItem(`${TRANSACTIONS_KEY}_${user!.id}`);
-      const transactions = storedTransactions ? JSON.parse(storedTransactions) : [];
-      
-      const storedBudgets = localStorage.getItem(`${BUDGETS_KEY}_${user!.id}`);
-      const budgets = storedBudgets ? JSON.parse(storedBudgets) : [];
+      // Fetch transactions and budgets from backend
+      const [transactionsRes, budgetsRes, scheduledRes] = await Promise.all([
+        transactionAPI.getAll(user.id),
+        budgetAPI.getAll(user.id),
+        scheduledPurchaseAPI.getAll()
+      ]);
 
-      // Get scheduled purchases data
-      const storedScheduled = localStorage.getItem(`${SCHEDULED_PURCHASES_KEY}_${user!.id}`);
-      const scheduled = storedScheduled ? JSON.parse(storedScheduled) : [];
+      const transactions = transactionsRes.success ? transactionsRes.data : [];
+      const budgets = budgetsRes.success ? budgetsRes.data : [];
+      const scheduled = scheduledRes && scheduledRes.success ? scheduledRes.data : [];
+
+      setTransactions(transactions);
+      setBudgets(budgets);
       setScheduledPurchases(scheduled);
 
-      const storedPast = localStorage.getItem(`${PAST_PURCHASES_KEY}_${user!.id}`);
-      const past = storedPast ? JSON.parse(storedPast) : [];
-      setPastPurchases(past);
+      // If there is a backend API for past purchases, fetch here. Otherwise, leave as empty array.
+      setPastPurchases([]);
 
       // Analyze spending patterns
       const patterns = analyzeSpendingPatterns(transactions);
@@ -1496,6 +1513,3 @@ const CashCoach: React.FC = () => {
 };
 
 export default CashCoach;
-
-// Module export to prevent TS1208 isolatedModules warnings
-export {};

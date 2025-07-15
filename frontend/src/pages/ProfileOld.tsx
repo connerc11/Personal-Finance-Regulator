@@ -949,6 +949,3 @@ const Profile: React.FC = () => {
 };
 
 export default Profile;
-
-// Module export to prevent TS1208 isolatedModules warnings
-export {};
