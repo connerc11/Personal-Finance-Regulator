@@ -19,10 +19,7 @@ import java.util.stream.Collectors;
 import jakarta.servlet.http.HttpServletResponse;
 
 @RestController
-@RequestMapping("/api/users/save-spotlight")
-@CrossOrigin(origins = {"http://localhost:3000", "http://localhost:3001"}, 
-            allowedHeaders = "*", 
-            methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE, RequestMethod.OPTIONS})
+@RequestMapping("/users/save-spotlight")  // Updated for API Gateway routing
 public class SaveSpotlightController {
 
     @Autowired
@@ -46,16 +43,16 @@ public class SaveSpotlightController {
     @Autowired
     private JwtUtils jwtUtils;
 
-    // CORS Preflight Handlers
-    @RequestMapping(method = RequestMethod.OPTIONS, value = "/**")
-    public ResponseEntity<?> handlePreflight(HttpServletResponse response) {
-        response.setHeader("Access-Control-Allow-Origin", "http://localhost:3000");
-        response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-        response.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
-        response.setHeader("Access-Control-Allow-Credentials", "true");
-        response.setHeader("Access-Control-Max-Age", "3600");
-        return ResponseEntity.ok().build();
-    }
+    // CORS Preflight Handlers - Disabled: CORS handled by API Gateway
+    // @RequestMapping(method = RequestMethod.OPTIONS, value = "/**")
+    // public ResponseEntity<?> handlePreflight(HttpServletResponse response) {
+    //     response.setHeader("Access-Control-Allow-Origin", "http://localhost:3000");
+    //     response.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+    //     response.setHeader("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+    //     response.setHeader("Access-Control-Allow-Credentials", "true");
+    //     response.setHeader("Access-Control-Max-Age", "3600");
+    //     return ResponseEntity.ok().build();
+    // }
 
     // Chat Rooms Endpoints
     @GetMapping("/chat/rooms")

@@ -25,7 +25,7 @@ jwt:
 
 personalfinance:
   app:
-    jwtSecret: personalFinanceSecretKey
+    jwtSecret: Y1JqNmM2cFNWcXY5ckYyNGFKcGJEa0I3V1FyU3ZLdDhON2tMWTNxWGpIcjlYN0Z2TjJaZ05NeDVwSDBmUDBaQg==
     jwtExpirationMs: 86400000
 
 logging:

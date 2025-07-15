@@ -27,7 +27,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/users")  // Updated for API Gateway routing
 public class UserController {
 
     @Autowired
