@@ -10,6 +10,25 @@
 			"problemMatcher": [
 				"$tsc"
 			]
+		},
+		{
+			"label": "Start Frontend",
+			"type": "shell",
+			"command": "npm start",
+			"options": {
+				"cwd": "${workspaceFolder}/frontend"
+			},
+			"group": "build",
+			"isBackground": true,
+			"problemMatcher": []
+		},
+		{
+			"label": "Start Backend Services",
+			"type": "shell",
+			"command": ".\\start-services.ps1",
+			"group": "build",
+			"isBackground": true,
+			"problemMatcher": []
 		}
 	]
 }

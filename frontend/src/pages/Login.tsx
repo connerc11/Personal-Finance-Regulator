@@ -40,7 +40,7 @@ const Login: React.FC = () => {
   const from = location.state?.from?.pathname || '/dashboard';
   
   const [formData, setFormData] = useState({
-    email: '',
+    identifier: '',
     password: '',
     rememberMe: false,
   });
@@ -55,25 +55,23 @@ const Login: React.FC = () => {
     setLoading(true);
 
     // Basic validation
-    if (!formData.email || !formData.password) {
-      setError('Please fill in all fields');
-      setLoading(false);
-      return;
-    }
-
-    if (!formData.email.includes('@')) {
-      setError('Please enter a valid email address');
+    if (!formData.identifier || !formData.password) {
+      setError('Please enter username or email and password');
       setLoading(false);
       return;
     }
 
     try {
-      await login(formData.email, formData.password);
+      await login(formData.identifier, formData.password);
       // Redirect to intended page or dashboard
       navigate(from, { replace: true });
     } catch (error) {
-      // Display the specific error message from AuthContext
-      setError(error instanceof Error ? error.message : 'Login failed. Please try again.');
+      // Show a user-friendly message for 401 errors
+      if (error instanceof Error && error.message && (error.message.toLowerCase().includes('401') || error.message.toLowerCase().includes('unauthorized') || error.message.toLowerCase().includes('login failed'))) {
+        setError('Your password or username is incorrect');
+      } else {
+        setError(error instanceof Error ? error.message : 'Login failed. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -208,10 +206,10 @@ const Login: React.FC = () => {
             <Box component="form" onSubmit={handleSubmit}>
               <TextField
                 fullWidth
-                label="Email Address"
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                label="Username or Email"
+                type="text"
+                value={formData.identifier}
+                onChange={(e) => setFormData({ ...formData, identifier: e.target.value })}
                 disabled={loading}
                 InputProps={{
                   startAdornment: (
@@ -243,7 +241,7 @@ const Login: React.FC = () => {
                     },
                   },
                 }}
-                autoComplete="email"
+                autoComplete="username"
               />
 
               <TextField

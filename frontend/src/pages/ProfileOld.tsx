@@ -123,7 +123,7 @@ const Profile: React.FC = () => {
     lastLogin: new Date().toISOString(),
   });
 
-  // Load user-specific data from localStorage
+  // TODO: Replace with API call to load user-specific data from backend
   useEffect(() => {
     if (authUser) {
       setUser(authUser);
@@ -146,7 +146,7 @@ const Profile: React.FC = () => {
     if (!authUser) return;
 
     try {
-      const storedPreferences = localStorage.getItem(`${PREFERENCES_KEY}_${authUser.id}`);
+      // TODO: Replace with API call to load preferences from backend
       if (storedPreferences) {
         const parsedPreferences = JSON.parse(storedPreferences);
         setPreferences(parsedPreferences);
@@ -160,7 +160,7 @@ const Profile: React.FC = () => {
     if (!authUser) return;
 
     try {
-      localStorage.setItem(`${PREFERENCES_KEY}_${authUser.id}`, JSON.stringify(newPreferences));
+      // TODO: Replace with API call to save preferences to backend
       setPreferences(newPreferences);
     } catch (error) {
       console.error('Failed to save user preferences:', error);
@@ -173,11 +173,11 @@ const Profile: React.FC = () => {
 
     try {
       // Get user transactions
-      const storedTransactions = localStorage.getItem(`${TRANSACTIONS_KEY}_${authUser.id}`);
+      // TODO: Replace with API call to load transactions from backend
       const transactions = storedTransactions ? JSON.parse(storedTransactions) : [];
 
       // Get user budgets
-      const storedBudgets = localStorage.getItem(`${BUDGETS_KEY}_${authUser.id}`);
+      // TODO: Replace with API call to load budgets from backend
       const budgets = storedBudgets ? JSON.parse(storedBudgets) : [];
 
       // Calculate account age in days
@@ -211,7 +211,7 @@ const Profile: React.FC = () => {
 
     try {
       // Get recent transactions (last 5)
-      const storedTransactions = localStorage.getItem(`${TRANSACTIONS_KEY}_${authUser.id}`);
+      // TODO: Replace with API call to load transactions from backend
       const transactions = storedTransactions ? JSON.parse(storedTransactions) : [];
       
       const recentTransactions = transactions
@@ -226,7 +226,7 @@ const Profile: React.FC = () => {
       });
 
       // Get recent budgets (last 2)
-      const storedBudgets = localStorage.getItem(`${BUDGETS_KEY}_${authUser.id}`);
+      // TODO: Replace with API call to load budgets from backend
       const budgets = storedBudgets ? JSON.parse(storedBudgets) : [];
       
       const recentBudgets = budgets
@@ -373,7 +373,7 @@ const Profile: React.FC = () => {
       },
     };
     
-    // Save to localStorage immediately
+    // TODO: Replace with API call to save data to backend
     saveUserPreferences(newPreferences);
   };
 

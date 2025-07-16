@@ -35,7 +35,7 @@ import { budgetAPI, transactionAPI } from '../services/apiService';
 import { budgetAIService, BudgetRecommendation, BudgetAnalysis } from '../services/budgetAIService';
 import { Budget, Transaction, BudgetCreateRequest, BudgetUpdateRequest } from '../types';
 
-// Remove localStorage usage - data comes from backend API
+// All budget and transaction data is loaded from backend API only. No localStorage is used for budgets or transactions.
 
 const Budgets: React.FC = () => {
   const { user } = useAuth();
@@ -81,7 +81,7 @@ const Budgets: React.FC = () => {
   // Load budgets and transactions from API on component mount
   useEffect(() => {
     const loadData = async () => {
-      if (user) {
+      if (user && user.id) {
         try {
           // Load budgets from API
           const budgetsResponse = await budgetAPI.getAll(user.id);
@@ -104,7 +104,7 @@ const Budgets: React.FC = () => {
           setTransactions([]);
         }
       } else {
-        // Clear data if no user
+        // Clear data if no user or user.id
         setBudgets([]);
         setTransactions([]);
       }
@@ -158,6 +158,7 @@ const Budgets: React.FC = () => {
   }, [transactions]); // Removed user dependency to prevent loops
 
   // Budgets are now managed by backend API, no localStorage needed
+  // (localStorage is not used anywhere in this component)
 
   // Calculate end date based on period and start date
   const calculateEndDate = (startDate: string, period: string) => {

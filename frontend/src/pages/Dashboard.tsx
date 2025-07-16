@@ -3,6 +3,7 @@ import { Box, Typography, Paper, Card, CardContent } from '@mui/material';
 import { TrendingUp, TrendingDown, AccountBalance, CreditCard } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import FinancialDataForm from '../components/FinancialDataForm';
+import { financialDataAPI } from '../services/apiService';
 
 // Local storage key for user financial data
 const FINANCIAL_DATA_KEY = 'personalfinance_user_data';
@@ -37,39 +38,43 @@ const Dashboard: React.FC = () => {
   const [userFinancialData, setUserFinancialData] = useState<FinancialData | null>(null);
   const [showSetupForm, setShowSetupForm] = useState(false);
 
+
   useEffect(() => {
     if (user) {
-      // Load user's financial data from localStorage
-      const storedData = localStorage.getItem(`${FINANCIAL_DATA_KEY}_${user.id}`);
-      if (storedData) {
-        setUserFinancialData(JSON.parse(storedData));
-      } else {
-        setShowSetupForm(true);
-      }
+      (async () => {
+        const result = await financialDataAPI.get();
+        if (result.success && result.data) {
+          setUserFinancialData(result.data);
+          setShowSetupForm(false);
+        } else {
+          setShowSetupForm(true);
+        }
+      })();
     }
   }, [user]);
 
-  const handleSaveFinancialData = (data: FinancialData) => {
+  const handleSaveFinancialData = async (data: FinancialData) => {
     if (user) {
-      // Save to localStorage with user ID
-      localStorage.setItem(`${FINANCIAL_DATA_KEY}_${user.id}`, JSON.stringify(data));
-      setUserFinancialData(data);
-      setShowSetupForm(false);
+      const result = await financialDataAPI.save(data);
+      if (result.success) {
+        setUserFinancialData(result.data);
+        setShowSetupForm(false);
+      }
     }
   };
 
   // Calculate stats from user's financial data
   const calculateUserStats = (data: FinancialData) => {
-    const totalBankBalance = data.bankAccounts.reduce((sum, account) => sum + account.balance, 0);
-    const totalCreditDebt = data.creditCards.reduce((sum, card) => sum + card.balance, 0);
-    const totalExpenses = Object.values(data.monthlyExpenses).reduce((sum, expense) => sum + expense, 0);
+    const totalBankBalance = (data.bankAccounts || []).reduce((sum, account) => sum + account.balance, 0);
+    const totalCreditDebt = (data.creditCards || []).reduce((sum, card) => sum + card.balance, 0);
+    const totalExpenses = Object.values(data.monthlyExpenses || {}).reduce((sum, expense) => sum + expense, 0);
     const netWorth = totalBankBalance - totalCreditDebt;
 
     return [
-      { title: 'Net Worth', value: `$${netWorth.toLocaleString()}`, icon: <AccountBalance />, color: netWorth >= 0 ? 'success' : 'error' },
-      { title: 'Monthly Income', value: `$${data.monthlyIncome.toLocaleString()}`, icon: <TrendingUp />, color: 'success' },
-      { title: 'Monthly Expenses', value: `$${totalExpenses.toLocaleString()}`, icon: <TrendingDown />, color: 'error' },
-      { title: 'Bank Accounts', value: data.bankAccounts.length.toString(), icon: <AccountBalance />, color: 'info' },
+      { title: 'Net Worth', value: `$${(netWorth ?? 0).toLocaleString()}`, icon: <AccountBalance />, color: netWorth >= 0 ? 'success' : 'error' },
+      { title: 'Monthly Income', value: `$${(data.monthlyIncome ?? 0).toLocaleString()}`, icon: <TrendingUp />, color: 'success' },
+      { title: 'Monthly Expenses', value: `$${(totalExpenses ?? 0).toLocaleString()}`, icon: <TrendingDown />, color: 'error' },
+      { title: 'Bank Accounts', value: (data.bankAccounts?.length ?? 0).toString(), icon: <AccountBalance />, color: 'info' },
     ];
   };
 

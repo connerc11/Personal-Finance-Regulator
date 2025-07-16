@@ -1,0 +1,10 @@
+CREATE TABLE goals (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL,
+    target_amount NUMERIC(14,2) NOT NULL,
+    current_amount NUMERIC(14,2) NOT NULL DEFAULT 0,
+    due_date DATE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

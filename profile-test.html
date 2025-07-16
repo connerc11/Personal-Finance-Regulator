@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile Settings Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; }
+        .pass { color: green; }
+        .fail { color: red; }
+        .pending { color: orange; }
+        button { margin: 5px; padding: 8px 15px; }
+    </style>
+</head>
+<body>
+    <h1>Profile Settings Test Page</h1>
+    
+    <div class="test-section">
+        <h2>🧪 Profile Settings Features Test</h2>
+        
+        <h3>1. Authentication & Access</h3>
+        <ul>
+            <li id="auth-check" class="pending">✋ Login with demo@personalfinance.com / demo123</li>
+            <li id="profile-access" class="pending">✋ Navigate to Profile page (/profile)</li>
+        </ul>
+        
+        <h3>2. Profile Tab Testing</h3>
+        <ul>
+            <li id="profile-load" class="pending">✋ Profile data loads correctly</li>
+            <li id="profile-edit" class="pending">✋ Edit mode toggles properly</li>
+            <li id="profile-save" class="pending">✋ Profile changes save successfully</li>
+            <li id="avatar-upload" class="pending">✋ Avatar upload works</li>
+        </ul>
+        
+        <h3>3. Preferences Tab Testing</h3>
+        <ul>
+            <li id="prefs-visible" class="pending">✋ Preferences tab is visible</li>
+            <li id="prefs-load" class="pending">✋ Preferences load correctly</li>
+            <li id="notification-toggle" class="pending">✋ Notification toggles work</li>
+            <li id="privacy-toggle" class="pending">✋ Privacy settings toggle</li>
+            <li id="theme-change" class="pending">✋ Theme/language/currency changes</li>
+        </ul>
+        
+        <h3>4. Security Tab Testing</h3>
+        <ul>
+            <li id="security-visible" class="pending">✋ Security tab is accessible</li>
+            <li id="password-dialog" class="pending">✋ Password change dialog opens</li>
+            <li id="password-validation" class="pending">✋ Password validation works</li>
+            <li id="password-change" class="pending">✋ Password change succeeds</li>
+        </ul>
+        
+        <h3>5. Account Stats Tab Testing</h3>
+        <ul>
+            <li id="stats-visible" class="pending">✋ Account stats tab loads</li>
+            <li id="stats-display" class="pending">✋ Statistics display correctly</li>
+        </ul>
+        
+        <h3>6. API Integration Testing</h3>
+        <ul>
+            <li id="api-fallback" class="pending">✋ Demo fallbacks work when API fails</li>
+            <li id="error-handling" class="pending">✋ Error messages display properly</li>
+            <li id="success-messages" class="pending">✋ Success notifications appear</li>
+        </ul>
+    </div>
+    
+    <div class="test-section">
+        <h2>🎯 Manual Testing Instructions</h2>
+        <ol>
+            <li>Open <a href="http://localhost:3000" target="_blank">http://localhost:3000</a></li>
+            <li>Login with: <strong>demo@personalfinance.com</strong> / <strong>demo123</strong></li>
+            <li>Navigate to Profile settings</li>
+            <li>Test each tab systematically:</li>
+            <ul>
+                <li><strong>Profile:</strong> Edit info, upload avatar</li>
+                <li><strong>Preferences:</strong> Toggle all switches and dropdowns</li>
+                <li><strong>Security:</strong> Try changing password</li>
+                <li><strong>Account Stats:</strong> Verify stats display</li>
+            </ul>
+            <li>Check for error/success messages</li>
+        </ol>
+        
+        <h3>🔍 Key Things to Verify:</h3>
+        <ul>
+            <li>✅ Profile data loads from API (or demo fallback)</li>
+            <li>✅ Profile edits save properly</li>
+            <li>✅ Avatar upload works (shows preview)</li>
+            <li>✅ Preferences tab appears and functions</li>
+            <li>✅ All preference toggles respond immediately</li>
+            <li>✅ Password change validates current password</li>
+            <li>✅ Success/error messages appear as snackbars</li>
+            <li>✅ No console errors or crashes</li>
+        </ul>
+    </div>
+    
+    <div class="test-section">
+        <h2>⚙️ Backend Status Check</h2>
+        <p>Services should be running on:</p>
+        <ul>
+            <li>API Gateway: <a href="http://localhost:8080" target="_blank">http://localhost:8080</a></li>
+            <li>User Service: <a href="http://localhost:8081" target="_blank">http://localhost:8081</a></li>
+            <li>Transaction Service: <a href="http://localhost:8082" target="_blank">http://localhost:8082</a></li>
+            <li>Budget Service: <a href="http://localhost:8083" target="_blank">http://localhost:8083</a></li>
+        </ul>
+        
+        <button onclick="checkBackendStatus()">Check Backend Status</button>
+        <div id="backend-status"></div>
+    </div>
+    
+    <script>
+        async function checkBackendStatus() {
+            const services = [
+                { name: 'API Gateway', url: 'http://localhost:8080' },
+                { name: 'User Service', url: 'http://localhost:8081' },
+                { name: 'Transaction Service', url: 'http://localhost:8082' },
+                { name: 'Budget Service', url: 'http://localhost:8083' }
+            ];
+            
+            const statusDiv = document.getElementById('backend-status');
+            statusDiv.innerHTML = '<p>Checking services...</p>';
+            
+            let results = '';
+            for (const service of services) {
+                try {
+                    const response = await fetch(service.url, { 
+                        method: 'GET', 
+                        mode: 'no-cors',
+                        cache: 'no-cache'
+                    });
+                    results += `<p class="pass">✅ ${service.name}: Running</p>`;
+                } catch (error) {
+                    results += `<p class="fail">❌ ${service.name}: Not responding</p>`;
+                }
+            }
+            
+            statusDiv.innerHTML = results;
+        }
+        
+        // Auto-check on load
+        window.onload = () => {
+            setTimeout(checkBackendStatus, 1000);
+        };
+    </script>
+</body>
+</html>

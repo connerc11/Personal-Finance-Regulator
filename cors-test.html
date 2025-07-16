@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CORS Test</title>
+</head>
+<body>
+    <h1>CORS Test for Save Spotlight</h1>
+    <button onclick="testCORS()">Test CORS Request</button>
+    <div id="result"></div>
+
+    <script>
+        function testCORS() {
+            const token = localStorage.getItem('personalfinance_token') || 'test-token';
+            
+            fetch('http://localhost:8080/api/users/save-spotlight/goals', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                document.getElementById('result').innerHTML = 
+                    `<p>Status: ${response.status}</p>
+                     <p>CORS working! Response received.</p>`;
+            })
+            .catch(error => {
+                document.getElementById('result').innerHTML = 
+                    `<p>Error: ${error.message}</p>
+                     <p>Check console for CORS details.</p>`;
+                console.error('Error:', error);
+            });
+        }
+    </script>
+</body>
+</html>

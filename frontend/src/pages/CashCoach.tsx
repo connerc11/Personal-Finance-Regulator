@@ -53,8 +53,9 @@ import {
   AutoAwesome as MagicIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
-import { transactionAPI, budgetAPI, scheduledPurchaseAPI } from '../services/apiService';
-import { ScheduledPurchase } from '../types';
+
+import { transactionAPI, budgetAPI, scheduledPurchaseAPI, goalsAPI } from '../services/apiService';
+import { ScheduledPurchase, FinancialGoal } from '../types';
 
 // Constants for localStorage keys
 const TRANSACTIONS_KEY = 'personal_finance_transactions';
@@ -144,6 +145,7 @@ const CashCoach: React.FC = () => {
   const [pastPurchases, setPastPurchases] = useState<PastPurchase[]>([]);
   const [transactions, setTransactions] = useState<any[]>([]);
   const [budgets, setBudgets] = useState<any[]>([]);
+  const [userGoals, setUserGoals] = useState<FinancialGoal[]>([]);
 
   // General financial suggestions (not user-specific)
   const generalSuggestions: CashCoachSuggestion[] = [
@@ -269,19 +271,23 @@ const CashCoach: React.FC = () => {
     setLoading(true);
     try {
       // Fetch transactions and budgets from backend
-      const [transactionsRes, budgetsRes, scheduledRes] = await Promise.all([
+
+      const [transactionsRes, budgetsRes, scheduledRes, goalsRes] = await Promise.all([
         transactionAPI.getAll(user.id),
         budgetAPI.getAll(user.id),
-        scheduledPurchaseAPI.getAll()
+        scheduledPurchaseAPI.getAll(),
+        goalsAPI.getAll(user.id)
       ]);
 
       const transactions = transactionsRes.success ? transactionsRes.data : [];
       const budgets = budgetsRes.success ? budgetsRes.data : [];
       const scheduled = scheduledRes && scheduledRes.success ? scheduledRes.data : [];
+      const goals = goalsRes && goalsRes.success ? goalsRes.data : [];
 
       setTransactions(transactions);
       setBudgets(budgets);
       setScheduledPurchases(scheduled);
+      setUserGoals(goals);
 
       // If there is a backend API for past purchases, fetch here. Otherwise, leave as empty array.
       setPastPurchases([]);
@@ -298,9 +304,9 @@ const CashCoach: React.FC = () => {
       const insights = generateInsights(transactions, budgets, scheduled);
       setAiInsights(insights);
 
-      // Generate goals based on user data (now including scheduled purchases)
-      const goals = generateGoals(transactions, budgets, scheduled);
-      setCoachingGoals(goals);
+      // Generate goals based on user data and real user goals
+      const coaching = generateGoals(transactions, budgets, scheduled, goals);
+      setCoachingGoals(coaching);
 
       // Simulate AI processing time (skip in test environment)
       const delay = process.env.NODE_ENV === 'test' ? 0 : 1500;
@@ -633,8 +639,24 @@ const CashCoach: React.FC = () => {
     return insights;
   };
 
-  const generateGoals = (transactions: any[], budgets: any[], scheduledPurchases: ScheduledPurchase[] = []): CoachingGoal[] => {
+  // Now includes userGoals from backend
+  const generateGoals = (transactions: any[], budgets: any[], scheduledPurchases: ScheduledPurchase[] = [], userGoals: FinancialGoal[] = []): CoachingGoal[] => {
     const goals: CoachingGoal[] = [];
+
+    // Add user goals from backend
+    if (userGoals && userGoals.length > 0) {
+      userGoals.forEach(goal => {
+        goals.push({
+          id: `usergoal_${goal.id}`,
+          title: goal.title,
+          target: goal.targetAmount,
+          current: goal.currentAmount,
+          deadline: goal.targetDate,
+          status: goal.isCompleted ? 'completed' : 'on-track',
+          suggestions: [goal.description]
+        });
+      });
+    }
 
     // Goals based on scheduled purchases
     if (scheduledPurchases.length > 0) {

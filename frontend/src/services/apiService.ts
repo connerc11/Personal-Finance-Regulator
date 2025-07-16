@@ -5,7 +5,7 @@ import { mockGoalsAPI, initializeGoalsDemoData } from './mockGoalsAPI';
 import { mockTransactionAPI, initializeTransactionDemoData } from './mockTransactionAPI';
 import { mockBudgetAPI, initializeBudgetDemoData } from './mockBudgetAPI';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8081';
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -14,16 +14,28 @@ const apiClient = axios.create({
   },
 });
 
-// Add auth token to requests
-apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem('personalfinance_token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+// Auth token management for all API clients
+let currentToken: string | null = null;
+
+export function setAuthToken(token: string | null) {
+  currentToken = token;
+}
+
+function attachAuthToken(config: any) {
+  if (currentToken) {
+    config.headers = config.headers || {};
+    config.headers.Authorization = `Bearer ${currentToken}`;
   }
   return config;
-});
+}
+
+// Attach token to all requests
+apiClient.interceptors.request.use(attachAuthToken);
+
+// Attach after client declarations below
 
 // Create separate clients for microservices when API gateway is not available
+
 const budgetServiceClient = axios.create({
   baseURL: 'http://localhost:8083',
   timeout: 10000,
@@ -31,20 +43,42 @@ const budgetServiceClient = axios.create({
     'Content-Type': 'application/json',
   },
 });
+budgetServiceClient.interceptors.request.use(attachAuthToken);
+
 
 const analyticsServiceClient = axios.create({
-  baseURL: 'http://localhost:8080', // Use API Gateway instead of direct service call
+  baseURL: 'http://localhost:8081', // Use user-service directly
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
   },
 });
+analyticsServiceClient.interceptors.request.use(attachAuthToken);
 
 // Auth API
-export const authAPI = {
-  login: async (username: string, password: string): Promise<ApiResponse<{ user: User; token: string }>> => {
+// Unified Financial Data API
+export const financialDataAPI = {
+  get: async (): Promise<ApiResponse<any>> => {
     try {
-      const response = await apiClient.post('/api/users/auth/signin', { username, password });
+      const response = await apiClient.get('/api/users/financial-data');
+      return { success: true, data: JSON.parse(response.data.data), message: 'Financial data loaded' };
+    } catch (error: any) {
+      return { success: false, data: null, message: error.response?.data?.message || 'Failed to load financial data' };
+    }
+  },
+  save: async (data: any): Promise<ApiResponse<any>> => {
+    try {
+      const response = await apiClient.put('/api/users/financial-data', { data });
+      return { success: true, data: JSON.parse(response.data.data), message: 'Financial data saved' };
+    } catch (error: any) {
+      return { success: false, data: null, message: error.response?.data?.message || 'Failed to save financial data' };
+    }
+  }
+};
+export const authAPI = {
+  login: async (identifier: string, password: string): Promise<ApiResponse<{ user: User; token: string }>> => {
+    try {
+      const response = await apiClient.post('/api/users/auth/signin', { identifier, password });
       return {
         success: true,
         data: {
@@ -64,7 +98,7 @@ export const authAPI = {
     } catch (error: any) {
       console.warn('Real auth API failed:', error);
       // For demo purposes, allow demo login with a unique demo user ID
-      if (username === 'demo@personalfinance.com' && password === 'demo123') {
+      if (identifier === 'demo@personalfinance.com' && password === 'demo123') {
         return {
           success: true,
           data: {
@@ -765,80 +799,42 @@ export const scheduledPurchaseAPI = {
   },
 };
 
-// Goals API - Using mock for now until backend is implemented
+// Goals API - Now using real backend endpoints
 export const goalsAPI = {
   getAll: async (userId?: number): Promise<ApiResponse<FinancialGoal[]>> => {
     try {
-      // Try real API first if we have userId
       if (userId) {
-        // Real API implementation (when backend is ready):
-        // const response = await apiClient.get(`/goals/user/${userId}`);
-        // return response.data;
+        const response = await apiClient.get(`/api/goals/user/${userId}`);
+        return { success: true, data: response.data, message: 'Goals retrieved successfully' };
       }
-    } catch (error) {
-      console.warn('Goals API failed:', error);
+      return { success: false, data: [], message: 'User ID required' };
+    } catch (error: any) {
+      return { success: false, data: [], message: error.response?.data?.message || 'Failed to get goals' };
     }
-    
-    // Check if this is a demo user (userId 999) or new user
-    const isDemoUser = userId === 999;
-    
-    if (isDemoUser) {
-      // Initialize and return demo goals for demo user
-      initializeGoalsDemoData();
-      return mockGoalsAPI.getAll();
-    }
-    
-    // For new users, return empty data
-    return {
-      success: true,
-      data: [],
-      message: 'No goals found - create your first goal to get started'
-    };
   },
-  
   create: async (goal: Omit<FinancialGoal, 'id' | 'createdAt' | 'progress' | 'monthlySavingsNeeded'>): Promise<ApiResponse<FinancialGoal>> => {
-    // For now, use mock API. Replace with real API calls when backend is ready
-    return mockGoalsAPI.create(goal);
-    
-    // Real API implementation (uncomment when backend is ready):
-    // const response = await apiClient.post('/goals', goal);
-    // return response.data;
+    try {
+      const response = await apiClient.post('/api/goals', goal);
+      return { success: true, data: response.data, message: 'Goal created successfully' };
+    } catch (error: any) {
+      return { success: false, data: {} as FinancialGoal, message: error.response?.data?.message || 'Failed to create goal' };
+    }
   },
-  
   update: async (id: number, goal: Partial<FinancialGoal>): Promise<ApiResponse<FinancialGoal>> => {
-    // For now, use mock API. Replace with real API calls when backend is ready
-    return mockGoalsAPI.update(id, goal);
-    
-    // Real API implementation (uncomment when backend is ready):
-    // const response = await apiClient.put(`/goals/${id}`, goal);
-    // return response.data;
+    try {
+      const response = await apiClient.put(`/api/goals/${id}`, goal);
+      return { success: true, data: response.data, message: 'Goal updated successfully' };
+    } catch (error: any) {
+      return { success: false, data: {} as FinancialGoal, message: error.response?.data?.message || 'Failed to update goal' };
+    }
   },
-  
   delete: async (id: number): Promise<ApiResponse<void>> => {
-    // For now, use mock API. Replace with real API calls when backend is ready
-    return mockGoalsAPI.delete(id);
-    
-    // Real API implementation (uncomment when backend is ready):
-    // const response = await apiClient.delete(`/goals/${id}`);
-    // return response.data;
-  },
-  
-  updateProgress: async (id: number, currentAmount: number): Promise<ApiResponse<FinancialGoal>> => {
-    // For now, use mock API. Replace with real API calls when backend is ready
-    return mockGoalsAPI.updateProgress(id, currentAmount);
-    
-    // Real API implementation (uncomment when backend is ready):
-    // const response = await apiClient.patch(`/goals/${id}/progress`, { currentAmount });
-    // return response.data;
-  },
-  
-  markCompleted: async (id: number): Promise<ApiResponse<FinancialGoal>> => {
-    // For now, use mock API. Replace with real API calls when backend is ready
-    return mockGoalsAPI.markCompleted(id);
-    
-    // Real API implementation (uncomment when backend is ready):
-    // const response = await apiClient.patch(`/goals/${id}/complete`);
-    // return response.data;
+    try {
+      await apiClient.delete(`/api/goals/${id}`);
+      return { success: true, data: undefined, message: 'Goal deleted successfully' };
+    } catch (error: any) {
+      return { success: false, data: undefined, message: error.response?.data?.message || 'Failed to delete goal' };
+    }
   },
 };
 

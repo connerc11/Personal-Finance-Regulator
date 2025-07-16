@@ -224,8 +224,7 @@ const Settings: React.FC = () => {
   const loadSettings = async () => {
     try {
       setLoading(true);
-      // In real app, load from API or localStorage
-      const savedSettings = localStorage.getItem('appSettings');
+      // TODO: Load from API only
       if (savedSettings) {
         setSettings({ ...settings, ...JSON.parse(savedSettings) });
       }

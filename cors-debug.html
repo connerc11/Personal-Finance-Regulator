@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CORS Test for Save Spotlight</title>
+</head>
+<body>
+    <h1>CORS Test for Save Spotlight</h1>
+    <button onclick="testCORS()">Test CORS Request</button>
+    <button onclick="testDirect()">Test Direct to User Service</button>
+    <div id="result"></div>
+
+    <script>
+        function testCORS() {
+            document.getElementById('result').innerHTML = '<p>Testing via API Gateway...</p>';
+            
+            fetch('http://localhost:8080/api/users/save-spotlight/goals', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                document.getElementById('result').innerHTML = 
+                    `<p>API Gateway Status: ${response.status}</p>
+                     <p>CORS working through API Gateway!</p>`;
+            })
+            .catch(error => {
+                document.getElementById('result').innerHTML = 
+                    `<p>API Gateway Error: ${error.message}</p>
+                     <p>Check console for CORS details.</p>`;
+                console.error('API Gateway Error:', error);
+            });
+        }
+
+        function testDirect() {
+            document.getElementById('result').innerHTML = '<p>Testing direct to user service...</p>';
+            
+            fetch('http://localhost:8081/api/users/save-spotlight/goals', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                document.getElementById('result').innerHTML = 
+                    `<p>Direct Status: ${response.status}</p>
+                     <p>CORS working direct to user service!</p>`;
+            })
+            .catch(error => {
+                document.getElementById('result').innerHTML = 
+                    `<p>Direct Error: ${error.message}</p>
+                     <p>Check console for CORS details.</p>`;
+                console.error('Direct Error:', error);
+            });
+        }
+    </script>
+</body>
+</html>

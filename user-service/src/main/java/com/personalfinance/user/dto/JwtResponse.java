@@ -1,6 +1,10 @@
 package com.personalfinance.user.dto;
 
 public class JwtResponse {
+    // Add getToken for frontend compatibility
+    public String getToken() {
+        return token;
+    }
     private String token;
     private String type = "Bearer";
     private Long id;

@@ -5,7 +5,6 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -21,8 +20,7 @@ import com.personalfinance.budget.dto.BudgetUpdateRequest;
 import com.personalfinance.budget.service.BudgetService;
 
 @RestController
-@RequestMapping("/budgets")
-@CrossOrigin(origins = "*", maxAge = 3600)
+@RequestMapping("/api/budgets")
 public class BudgetController {
 
     @Autowired
@@ -35,6 +33,16 @@ public class BudgetController {
             return ResponseEntity.status(HttpStatus.CREATED).body(budget);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+    }
+
+    @GetMapping
+    public ResponseEntity<List<BudgetResponse>> getAllBudgets() {
+        try {
+            List<BudgetResponse> budgets = budgetService.getAllBudgets();
+            return ResponseEntity.ok(budgets);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 

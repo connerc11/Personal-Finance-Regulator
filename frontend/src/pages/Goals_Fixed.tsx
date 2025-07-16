@@ -145,7 +145,7 @@ const Goals = () => {
     }
   ];
 
-  // Load goals from localStorage when component mounts
+  // TODO: Replace with API call to load goals from backend
   useEffect(() => {
     if (user?.id) {
       loadGoals();
@@ -156,7 +156,7 @@ const Goals = () => {
     if (!user?.id) return;
     
     try {
-      const stored = localStorage.getItem(GOALS_STORAGE_KEY);
+      // TODO: Replace with API call to load goals from backend
       if (stored) {
         const allGoals = JSON.parse(stored);
         const userGoals = allGoals.filter((goal: FinancialGoal) => goal.userId === user.id);
@@ -181,7 +181,7 @@ const Goals = () => {
 
   const saveGoalsToStorage = (updatedGoals: FinancialGoal[]) => {
     try {
-      const stored = localStorage.getItem(GOALS_STORAGE_KEY);
+      // TODO: Replace with API call to load goals from backend
       const allGoals = stored ? JSON.parse(stored) : [];
       
       // Remove old goals for this user
@@ -190,7 +190,7 @@ const Goals = () => {
       // Add updated goals for this user
       const newAllGoals = [...otherUsersGoals, ...updatedGoals];
       
-      localStorage.setItem(GOALS_STORAGE_KEY, JSON.stringify(newAllGoals));
+      // TODO: Replace with API call to save goals to backend
     } catch (error) {
       console.error('Error saving goals:', error);
     }

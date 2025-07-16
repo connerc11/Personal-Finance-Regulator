@@ -44,6 +44,14 @@ public class BudgetService {
     }
 
     @Transactional(readOnly = true)
+    public List<BudgetResponse> getAllBudgets() {
+        List<Budget> budgets = budgetRepository.findAll();
+        return budgets.stream()
+                .map(BudgetResponse::new)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
     public Optional<BudgetResponse> getBudgetById(Long id) {
         return budgetRepository.findById(id)
                 .map(BudgetResponse::new);

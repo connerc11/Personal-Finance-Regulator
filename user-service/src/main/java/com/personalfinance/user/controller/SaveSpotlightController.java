@@ -1,14 +1,5 @@
 package com.personalfinance.user.controller;
 
-import com.personalfinance.user.dto.*;
-import com.personalfinance.user.model.*;
-import com.personalfinance.user.repository.*;
-import com.personalfinance.user.security.JwtUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
-
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -16,7 +7,40 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.personalfinance.user.dto.AddCommentRequest;
+import com.personalfinance.user.dto.ChatMessageDTO;
+import com.personalfinance.user.dto.ChatRoomDTO;
+import com.personalfinance.user.dto.CreateChatRoomRequest;
+import com.personalfinance.user.dto.GoalCommentDTO;
+import com.personalfinance.user.dto.SendMessageRequest;
+import com.personalfinance.user.dto.ShareGoalRequest;
+import com.personalfinance.user.dto.SharedGoalDTO;
+import com.personalfinance.user.model.ChatMessage;
+import com.personalfinance.user.model.ChatRoom;
+import com.personalfinance.user.model.GoalComment;
+import com.personalfinance.user.model.GoalLike;
+import com.personalfinance.user.model.SharedGoal;
+import com.personalfinance.user.model.User;
+import com.personalfinance.user.repository.ChatMessageRepository;
+import com.personalfinance.user.repository.ChatRoomRepository;
+import com.personalfinance.user.repository.GoalCommentRepository;
+import com.personalfinance.user.repository.GoalLikeRepository;
+import com.personalfinance.user.repository.SharedGoalRepository;
+import com.personalfinance.user.repository.UserRepository;
+import com.personalfinance.user.security.JwtUtils;
 
 @RestController
 @RequestMapping("/users/save-spotlight")  // Updated for API Gateway routing

@@ -1,22 +1,5 @@
 package com.personalfinance.user.controller;
 
-import com.personalfinance.user.dto.ChangePasswordRequest;
-import com.personalfinance.user.dto.UserProfileRequest;
-import com.personalfinance.user.dto.UserProfileResponse;
-import com.personalfinance.user.model.User;
-import com.personalfinance.user.model.UserPreferences;
-import com.personalfinance.user.repository.UserRepository;
-import com.personalfinance.user.repository.UserPreferencesRepository;
-import com.personalfinance.user.security.UserDetailsImpl;
-import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -26,8 +9,33 @@ import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.personalfinance.user.dto.ChangePasswordRequest;
+import com.personalfinance.user.dto.UserProfileRequest;
+import com.personalfinance.user.dto.UserProfileResponse;
+import com.personalfinance.user.model.User;
+import com.personalfinance.user.model.UserPreferences;
+import com.personalfinance.user.repository.UserPreferencesRepository;
+import com.personalfinance.user.repository.UserRepository;
+import com.personalfinance.user.security.UserDetailsImpl;
+
+import jakarta.validation.Valid;
+
 @RestController
-@RequestMapping("/users")  // Updated for API Gateway routing
+@RequestMapping("/api/users")  // Updated for API Gateway and frontend consistency
 public class UserController {
 
     @Autowired
@@ -38,6 +46,13 @@ public class UserController {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    // TEMPORARY: Test password/hash matching
+    @PostMapping("/test-password")
+    public ResponseEntity<?> testPassword(@RequestParam String rawPassword, @RequestParam String hash) {
+        boolean matches = passwordEncoder.matches(rawPassword, hash);
+        return ResponseEntity.ok("Password match: " + matches);
+    }
 
     private static final String UPLOAD_DIR = "uploads/avatars/";
 

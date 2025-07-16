@@ -29,21 +29,14 @@ const SaveSpotlight: React.FC = () => {
     description: ''
   });
 
-  // Load spotlights from localStorage
+  // TODO: Replace with API call to load spotlights from backend
   useEffect(() => {
-    const stored = localStorage.getItem('saveSpotlights');
-    if (stored) {
-      try {
-        setSpotlights(JSON.parse(stored));
-      } catch (e) {
-        console.error('Error loading spotlights:', e);
-      }
-    }
+    // Example: apiService.getSpotlights(user.id).then(setSpotlights)
   }, []);
 
-  // Save to localStorage
-  const saveSpotlights = (data: SpotlightData[]) => {
-    localStorage.setItem('saveSpotlights', JSON.stringify(data));
+  // TODO: Replace with API call to save spotlights to backend
+  const saveSpotlights = async (data: SpotlightData[]) => {
+    // Example: await apiService.saveSpotlights(user.id, data)
     setSpotlights(data);
   };
 

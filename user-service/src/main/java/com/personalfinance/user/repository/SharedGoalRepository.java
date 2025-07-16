@@ -1,12 +1,13 @@
 package com.personalfinance.user.repository;
 
-import com.personalfinance.user.model.SharedGoal;
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-import java.util.Optional;
+import com.personalfinance.user.model.SharedGoal;
 
 @Repository
 public interface SharedGoalRepository extends JpaRepository<SharedGoal, Long> {
