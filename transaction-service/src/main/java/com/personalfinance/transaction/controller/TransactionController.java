@@ -26,17 +26,22 @@ import com.personalfinance.transaction.dto.TransactionUpdateRequest;
 import com.personalfinance.transaction.service.TransactionService;
 
 import jakarta.validation.Valid;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @RestController
 @RequestMapping("/transactions")
 public class TransactionController {
+    private static final Logger logger = LoggerFactory.getLogger(TransactionController.class);
 
     @Autowired
     private TransactionService transactionService;
 
     @PostMapping
     public ResponseEntity<TransactionResponse> createTransaction(@Valid @RequestBody TransactionCreateRequest request) {
+        logger.info("POST /transactions called. Request: {}", request);
         TransactionResponse transaction = transactionService.createTransaction(request);
+        logger.debug("Created transaction: {}", transaction);
         return ResponseEntity.ok(transaction);
     }
 

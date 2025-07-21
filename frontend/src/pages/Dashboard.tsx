@@ -34,7 +34,7 @@ interface FinancialData {
 }
 
 const Dashboard: React.FC = () => {
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const [userFinancialData, setUserFinancialData] = useState<FinancialData | null>(null);
   const [showSetupForm, setShowSetupForm] = useState(false);
 
@@ -54,12 +54,14 @@ const Dashboard: React.FC = () => {
   }, [user]);
 
   const handleSaveFinancialData = async (data: FinancialData) => {
-    if (user) {
-      const result = await financialDataAPI.save(data);
-      if (result.success) {
-        setUserFinancialData(result.data);
-        setShowSetupForm(false);
-      }
+    if (!user || !token) {
+      alert('You must be logged in to save your financial profile.');
+      return;
+    }
+    const result = await financialDataAPI.save(data);
+    if (result.success) {
+      setUserFinancialData(result.data);
+      setShowSetupForm(false);
     }
   };
 

@@ -42,7 +42,7 @@
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <scope>runtime</scope>
+            <version>42.6.2</version>
         </dependency>
         <!-- Keep H2 for testing -->
         <dependency>

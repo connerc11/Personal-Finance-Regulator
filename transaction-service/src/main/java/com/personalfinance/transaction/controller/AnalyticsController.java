@@ -19,10 +19,13 @@ import org.springframework.web.bind.annotation.RestController;
 import com.personalfinance.transaction.dto.TransactionResponse;
 import com.personalfinance.transaction.model.Transaction;
 import com.personalfinance.transaction.service.TransactionService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @RestController
 @RequestMapping("/analytics")
 public class AnalyticsController {
+    private static final Logger logger = LoggerFactory.getLogger(AnalyticsController.class);
 
     @Autowired
     private TransactionService transactionService;
@@ -127,10 +130,8 @@ public class AnalyticsController {
             monthData.put("income", income);
             monthData.put("expenses", expenses);
             monthData.put("savings", savings);
-            
             trendData.add(monthData);
         }
-        
         return ResponseEntity.ok(trendData);
     }
 
@@ -139,8 +140,11 @@ public class AnalyticsController {
             @PathVariable Long userId,
             @RequestParam(defaultValue = "6months") String timeRange) {
         
+        logger.info("GET /analytics/user/{}/dashboard called. timeRange: {}", userId, timeRange);
         Map<String, BigDecimal> categoryExpenses = transactionService.getCategoryExpenses(userId);
         Map<String, BigDecimal> summary = transactionService.getTransactionSummary(userId);
+        logger.debug("Summary: {}", summary);
+        logger.debug("Category Expenses: {}", categoryExpenses);
         BigDecimal totalExpenses = summary.get("totalExpenses");
         
         List<Map<String, Object>> categoryBreakdown = new ArrayList<>();

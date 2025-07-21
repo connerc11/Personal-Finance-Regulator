@@ -16,8 +16,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   // On mount, do not use localStorage for session persistence
+  // On mount, restore token from localStorage if present
   useEffect(() => {
-    setAuthToken(null);
+    const storedToken = localStorage.getItem('personalfinance_token');
+    if (storedToken) {
+      setToken(storedToken);
+      setAuthToken(storedToken);
+    }
     setIsLoading(false);
   }, []);
 
@@ -33,6 +38,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setUser(result.data.user);
       setToken(result.data.token);
       setAuthToken(result.data.token);
+      localStorage.setItem('personalfinance_token', result.data.token);
       console.log('Auth token set after login:', result.data.token);
     } catch (error) {
       throw error;
@@ -65,6 +71,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setUser(null);
     setToken(null);
     setAuthToken(null);
+    localStorage.removeItem('personalfinance_token');
   };
 
 
