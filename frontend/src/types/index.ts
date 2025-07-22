@@ -130,18 +130,18 @@ export interface LoginData {
 
 export interface FinancialGoal {
   id: number;
-  title: string;
+  name: string;
   description: string;
   targetAmount: number;
   currentAmount: number;
   category: string;
   priority: 'low' | 'medium' | 'high';
-  targetDate: string;
+  dueDate: string;
   isCompleted: boolean;
   userId: number;
   createdAt: string;
-  monthlySavingsNeeded?: number;
   progress?: number;
+  monthlySavingsNeeded?: number;
 }
 
 export interface ApiResponse<T> {

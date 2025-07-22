@@ -66,12 +66,7 @@ const Login: React.FC = () => {
       // Redirect to intended page or dashboard
       navigate(from, { replace: true });
     } catch (error) {
-      // Show a user-friendly message for 401 errors
-      if (error instanceof Error && error.message && (error.message.toLowerCase().includes('401') || error.message.toLowerCase().includes('unauthorized') || error.message.toLowerCase().includes('login failed'))) {
-        setError('Your password or username is incorrect');
-      } else {
-        setError(error instanceof Error ? error.message : 'Login failed. Please try again.');
-      }
+      setError('Sign in has failed');
     } finally {
       setLoading(false);
     }

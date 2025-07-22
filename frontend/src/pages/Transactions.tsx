@@ -61,10 +61,37 @@ const Transactions: React.FC = () => {
   });
 
   // Helper to map frontend type to backend type
+  // Helper to map frontend type and category to backend type and enum value
   const mapFrontendToBackend = (tx) => ({
     ...tx,
-    type: tx.type === 'income' ? 'INCOME' : tx.type === 'expense' ? 'EXPENSE' : tx.type
+    type: tx.type === 'income' ? 'INCOME' : tx.type === 'expense' ? 'EXPENSE' : tx.type,
+    category: mapCategoryToEnum(tx.category)
   });
+
+  // Map display category to backend enum value
+  const mapCategoryToEnum = (category) => {
+    switch (category) {
+      case 'Salary': return 'SALARY';
+      case 'Freelance': return 'BUSINESS';
+      case 'Investment': return 'INVESTMENT';
+      case 'Business': return 'BUSINESS';
+      case 'Other Income': return 'OTHER_INCOME';
+      case 'Food': return 'DINING';
+      case 'Transportation': return 'TRANSPORTATION';
+      case 'Shopping': return 'SHOPPING';
+      case 'Entertainment': return 'ENTERTAINMENT';
+      case 'Bills & Utilities': return 'UTILITIES';
+      case 'Healthcare': return 'HEALTHCARE';
+      case 'Education': return 'EDUCATION';
+      case 'Travel': return 'TRAVEL';
+      case 'Other Expense': return 'OTHER_EXPENSE';
+      case 'Groceries': return 'GROCERIES';
+      case 'Rent': return 'RENT';
+      case 'Insurance': return 'INSURANCE';
+      case 'Charity': return 'CHARITY';
+      default: return 'OTHER_EXPENSE';
+    }
+  };
 
   useEffect(() => {
     const fetchTransactions = async () => {

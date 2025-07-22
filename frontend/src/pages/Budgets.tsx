@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+// import { Alert } from '@mui/material';
 import {
   Box,
   Typography,
@@ -34,12 +35,12 @@ import { useAuth } from '../contexts/AuthContext';
 import { budgetAPI, transactionAPI } from '../services/apiService';
 import { budgetAIService, BudgetRecommendation, BudgetAnalysis } from '../services/budgetAIService';
 import { Budget, Transaction, BudgetCreateRequest, BudgetUpdateRequest } from '../types';
-
 // All budget and transaction data is loaded from backend API only. No localStorage is used for budgets or transactions.
 
 const Budgets: React.FC = () => {
   const { user } = useAuth();
   const [budgets, setBudgets] = useState<Budget[]>([]);
+  const [budgetError, setBudgetError] = useState<string | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [open, setOpen] = useState(false);
   const [editingBudget, setEditingBudget] = useState<Budget | null>(null);
@@ -79,37 +80,41 @@ const Budgets: React.FC = () => {
   ];
 
   // Load budgets and transactions from API on component mount
+  useEffect(() => { console.log('[Budgets] User context:', user); }, [user]);
+
   useEffect(() => {
     const loadData = async () => {
       if (user && user.id) {
         try {
-          // Load budgets from API
+          console.log('[Budgets] Fetching budgets for userId:', user.id);
           const budgetsResponse = await budgetAPI.getAll(user.id);
+          console.log('[Budgets] Budgets API response:', budgetsResponse);
           if (budgetsResponse.success) {
             setBudgets(budgetsResponse.data);
           } else {
             setBudgets([]);
           }
 
-          // Load transactions from API  
+          console.log('[Budgets] Fetching transactions for userId:', user.id);
           const transactionsResponse = await transactionAPI.getAll(user.id);
+          console.log('[Budgets] Transactions API response:', transactionsResponse);
           if (transactionsResponse.success) {
             setTransactions(transactionsResponse.data);
           } else {
             setTransactions([]);
           }
         } catch (error) {
-          console.error('Error loading data:', error);
+          console.error('[Budgets] Error loading data:', error);
           setBudgets([]);
           setTransactions([]);
         }
       } else {
         // Clear data if no user or user.id
+        console.warn('[Budgets] No user context, clearing budgets/transactions');
         setBudgets([]);
         setTransactions([]);
       }
     };
-
     loadData();
   }, [user]);
 
@@ -141,17 +146,17 @@ const Budgets: React.FC = () => {
   // Update budgets with calculated spending whenever transactions change
   useEffect(() => {
     if (budgets.length > 0 && transactions.length >= 0) {
+      console.log('[Budgets] Calculating spent amounts for budgets...');
       const updatedBudgets = budgets.map(budget => ({
         ...budget,
         spent: calculateSpentAmount(budget, transactions)
       }));
-      
       // Only update if there are actual changes to prevent infinite loops
       const hasChanges = updatedBudgets.some((budget, index) => 
         budget.spent !== budgets[index].spent
       );
-      
       if (hasChanges) {
+        console.log('[Budgets] Updating budgets with new spent amounts:', updatedBudgets);
         setBudgets(updatedBudgets);
       }
     }
@@ -254,11 +259,9 @@ const Budgets: React.FC = () => {
 
   const handleSubmit = async () => {
     const amount = parseFloat(formData.amount);
-    
     if (!formData.name || !formData.category || !amount || amount <= 0 || !user) {
       return; // Basic validation
     }
-    
     try {
       if (editingBudget) {
         // Update existing budget
@@ -270,8 +273,9 @@ const Budgets: React.FC = () => {
           startDate: formData.startDate,
           endDate: formData.endDate,
         };
-        
+        console.log('[Budgets] Updating budget:', editingBudget.id, budgetData);
         const response = await budgetAPI.update(editingBudget.id, budgetData);
+        console.log('[Budgets] Update response:', response);
         if (response.success) {
           // Update local state
           const updatedBudgets = budgets.map(b => 
@@ -290,17 +294,17 @@ const Budgets: React.FC = () => {
           startDate: formData.startDate,
           endDate: formData.endDate,
         };
-        
+        console.log('[Budgets] Creating new budget:', budgetData);
         const response = await budgetAPI.create(budgetData);
+        console.log('[Budgets] Create response:', response);
         if (response.success) {
           // Add to local state
           setBudgets([...budgets, response.data]);
         }
       }
-      
       handleClose();
     } catch (error) {
-      console.error('Error saving budget:', error);
+      console.error('[Budgets] Error saving budget:', error);
     }
   };
 
@@ -318,6 +322,7 @@ const Budgets: React.FC = () => {
   };
 
   const handleEdit = (budget: Budget) => {
+    console.log('[Budgets] Editing budget:', budget);
     setEditingBudget(budget);
     setFormData({
       name: budget.name,
@@ -332,17 +337,18 @@ const Budgets: React.FC = () => {
 
   const handleDelete = async (id: number) => {
     if (!user) return;
-    
     try {
+      console.log('[Budgets] Deleting budget:', id);
       const response = await budgetAPI.delete(id);
+      console.log('[Budgets] Delete response:', response);
       if (response.success) {
         // Remove from local state
         setBudgets(budgets.filter(b => b.id !== id));
       } else {
-        console.error('Failed to delete budget:', response.message);
+        console.error('[Budgets] Failed to delete budget:', response.message);
       }
     } catch (error) {
-      console.error('Error deleting budget:', error);
+      console.error('[Budgets] Error deleting budget:', error);
     }
   };
 
@@ -363,6 +369,11 @@ const Budgets: React.FC = () => {
 
   return (
     <Box sx={{ p: 3 }}>
+      {budgetError && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {budgetError}
+        </Alert>
+      )}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography 
           variant="h4" 

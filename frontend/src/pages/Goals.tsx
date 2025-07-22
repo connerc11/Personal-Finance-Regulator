@@ -68,7 +68,7 @@ const Goals: React.FC = () => {
     currentAmount: '',
     category: '',
     priority: 'medium' as 'low' | 'medium' | 'high',
-    targetDate: '',
+    dueDate: '',
   });
 
   const categories = [
@@ -200,13 +200,13 @@ const Goals: React.FC = () => {
     if (goal) {
       setEditingGoal(goal);
       setFormData({
-        title: goal.title,
+        title: goal.name,
         description: goal.description,
         targetAmount: goal.targetAmount.toString(),
         currentAmount: goal.currentAmount.toString(),
         category: goal.category,
         priority: goal.priority,
-        targetDate: goal.targetDate,
+        dueDate: goal.dueDate,
       });
     } else {
       setEditingGoal(null);
@@ -214,10 +214,10 @@ const Goals: React.FC = () => {
         title: '',
         description: '',
         targetAmount: '',
-        currentAmount: '0',
+        currentAmount: '',
         category: '',
         priority: 'medium',
-        targetDate: '',
+        dueDate: '',
       });
     }
     setOpenDialog(true);
@@ -228,23 +228,39 @@ const Goals: React.FC = () => {
     setEditingGoal(null);
   };
 
+  // Patch: Ensure category is included in goal creation and update
   const handleSaveGoal = async () => {
     if (!user?.id) return;
-
+    if (!formData.title.trim()) {
+      showErrorMessage('Goal name is required. Please enter a name for your goal.');
+      return;
+    }
     try {
       setSaving(true);
       setError(null);
 
-      const goalData = {
-        title: formData.title,
+      const targetAmountNum = parseFloat(formData.targetAmount);
+      const currentAmountNum = parseFloat(formData.currentAmount) || 0;
+      const validTargetAmount = isNaN(targetAmountNum) || targetAmountNum === 0 ? 1 : targetAmountNum;
+      const progress = (currentAmountNum / validTargetAmount) * 100;
+      const goalData: FinancialGoal = {
+        id: editingGoal?.id || Date.now(),
+        name: formData.title,
         description: formData.description,
-        targetAmount: parseFloat(formData.targetAmount),
-        currentAmount: parseFloat(formData.currentAmount) || 0,
+        targetAmount: targetAmountNum,
+        currentAmount: currentAmountNum,
         category: formData.category,
         priority: formData.priority,
-        targetDate: formData.targetDate,
+        dueDate: formData.dueDate,
         isCompleted: false,
         userId: user.id,
+        createdAt: editingGoal?.createdAt || new Date().toISOString(),
+        progress,
+        monthlySavingsNeeded: calculateMonthlySavingsNeeded({
+          targetAmount: targetAmountNum,
+          currentAmount: currentAmountNum,
+          targetDate: formData.dueDate
+        })
       };
 
       let response;
@@ -286,15 +302,17 @@ const Goals: React.FC = () => {
 
   const handleUpdateProgress = async (goalId: number, newAmount: number) => {
     try {
-      const response = await goalsAPI.updateProgress(goalId, newAmount);
+      // Use the update function to update currentAmount and progress
+      const response = await goalsAPI.update(goalId, {
+        currentAmount: newAmount
+      });
       if (response.success) {
-        showSuccessMessage('Progress updated successfully!');
+        showSuccessMessage('Progress updated!');
         loadGoals(); // Reload goals to get updated data
       } else {
-        showErrorMessage(response.message || 'Failed to update progress');
+        showErrorMessage('Failed to update progress.');
       }
     } catch (error) {
-      console.error('Error updating progress:', error);
       showErrorMessage('Failed to update progress. Please try again.');
     }
   };
@@ -550,10 +568,10 @@ const Goals: React.FC = () => {
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
                   <Box sx={{ flex: 1 }}>
                     <Typography variant="h6" gutterBottom>
-                      {goal.title}
+                      {goal.name}
                     </Typography>
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                      {goal.description}
+                      {goal.description ? goal.description : "No description provided."}
                     </Typography>
                   </Box>
                   <Box sx={{ display: 'flex', gap: 1 }}>
@@ -603,7 +621,7 @@ const Goals: React.FC = () => {
                   />
                   <Chip
                     icon={<CalendarIcon />}
-                    label={formatDate(goal.targetDate)}
+                    label={goal.dueDate ? formatDate(goal.dueDate) : "No date set"}
                     size="small"
                     variant="outlined"
                   />
@@ -624,7 +642,7 @@ const Goals: React.FC = () => {
                       fullWidth
                       onClick={() => {
                         const newAmount = prompt(
-                          `Update progress for "${goal.title}"\nCurrent: ${formatCurrency(goal.currentAmount)}\nTarget: ${formatCurrency(goal.targetAmount)}\n\nEnter new amount:`,
+                          `Update progress for "${goal.name}"\nCurrent: ${formatCurrency(goal.currentAmount)}\nTarget: ${formatCurrency(goal.targetAmount)}\n\nEnter new amount:`,
                           goal.currentAmount.toString()
                         );
                         if (newAmount && !isNaN(parseFloat(newAmount))) {
@@ -790,8 +808,8 @@ const Goals: React.FC = () => {
               label="Target Date"
               type="date"
               fullWidth
-              value={formData.targetDate}
-              onChange={(e) => setFormData({ ...formData, targetDate: e.target.value })}
+              value={formData.dueDate}
+              onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
               InputLabelProps={{ shrink: true }}
             />
           </Box>
@@ -807,7 +825,7 @@ const Goals: React.FC = () => {
             placeholder="Describe your goal and why it's important to you..."
           />
           
-          {formData.targetAmount && formData.targetDate && (
+          {formData.targetAmount && formData.dueDate && (
             <Alert severity="info" sx={{ mt: 2 }}>
               <Typography variant="body2">
                 You'll need to save approximately <strong>
@@ -815,7 +833,7 @@ const Goals: React.FC = () => {
                     calculateMonthlySavingsNeeded({
                       targetAmount: parseFloat(formData.targetAmount) || 0,
                       currentAmount: parseFloat(formData.currentAmount) || 0,
-                      targetDate: formData.targetDate
+                      targetDate: formData.dueDate
                     })
                   )}
                 </strong> per month to reach this goal.
@@ -828,7 +846,7 @@ const Goals: React.FC = () => {
           <Button
             onClick={handleSaveGoal}
             variant="contained"
-            disabled={!formData.title || !formData.targetAmount || !formData.category || !formData.targetDate || saving}
+            disabled={!formData.title || !formData.targetAmount || !formData.category || !formData.dueDate || saving}
             startIcon={saving ? <CircularProgress size={20} /> : null}
           >
             {saving ? 'Saving...' : (editingGoal ? 'Update Goal' : 'Create Goal')}

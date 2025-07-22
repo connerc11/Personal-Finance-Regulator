@@ -25,6 +25,9 @@ function attachAuthToken(config: any) {
   if (currentToken) {
     config.headers = config.headers || {};
     config.headers.Authorization = `Bearer ${currentToken}`;
+    console.debug('[apiService] Attaching Authorization header:', config.headers.Authorization);
+  } else {
+    console.warn('[apiService] No token set for Authorization header');
   }
   return config;
 }
@@ -37,13 +40,40 @@ apiClient.interceptors.request.use(attachAuthToken);
 // Create separate clients for microservices when API gateway is not available
 
 const budgetServiceClient = axios.create({
-  baseURL: 'http://localhost:8083',
+  baseURL: 'http://localhost:8080', // Use API gateway for all budget requests
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 budgetServiceClient.interceptors.request.use(attachAuthToken);
+// Add response interceptor for detailed logging
+budgetServiceClient.interceptors.response.use(
+  (response) => {
+    console.debug('[budgetServiceClient] Response:', {
+      url: response.config.url,
+      status: response.status,
+      headers: response.headers,
+      data: response.data
+    });
+    return response;
+  },
+  (error) => {
+    if (error.response) {
+      console.error('[budgetServiceClient] Error Response:', {
+        url: error.config?.url,
+        status: error.response.status,
+        headers: error.response.headers,
+        data: error.response.data
+      });
+    } else if (error.request) {
+      console.error('[budgetServiceClient] No Response (network/CORS error):', error.request);
+    } else {
+      console.error('[budgetServiceClient] Request Setup Error:', error.message);
+    }
+    return Promise.reject(error);
+  }
+);
 
 
 const analyticsServiceClient = axios.create({
@@ -61,7 +91,7 @@ export const financialDataAPI = {
   get: async (): Promise<ApiResponse<any>> => {
     try {
       const response = await apiClient.get('/api/users/financial-data');
-      return { success: true, data: JSON.parse(response.data.data), message: 'Financial data loaded' };
+      return { success: true, data: response.data.data, message: 'Financial data loaded' };
     } catch (error: any) {
       return { success: false, data: null, message: error.response?.data?.message || 'Failed to load financial data' };
     }
@@ -69,7 +99,7 @@ export const financialDataAPI = {
   save: async (data: any): Promise<ApiResponse<any>> => {
     try {
       const response = await apiClient.put('/api/users/financial-data', { data });
-      return { success: true, data: JSON.parse(response.data.data), message: 'Financial data saved' };
+      return { success: true, data: response.data.data, message: 'Financial data saved' };
     } catch (error: any) {
       return { success: false, data: null, message: error.response?.data?.message || 'Failed to save financial data' };
     }
@@ -428,35 +458,43 @@ export const transactionAPI = {
 // Budget API
 export const budgetAPI = {
   getAll: async (userId: number): Promise<ApiResponse<Budget[]>> => {
-    // Only demo user gets mock data
     if (userId === 999) {
       initializeBudgetDemoData();
       return mockBudgetAPI.getAll();
     }
-
     try {
-      // Use real budget service API with normalized user ID
       const normalizedUserId = normalizeUserId(userId);
-      const response = await apiClient.get(`/api/budgets/user/${normalizedUserId}`);
+      const url = `/api/budgets/user/${normalizedUserId}`;
+      console.debug('[budgetAPI] GET', url, 'with token:', currentToken);
+      console.debug('[budgetAPI] Request headers:', budgetServiceClient.defaults.headers);
+      const response = await budgetServiceClient.get(url);
       return {
         success: true,
         data: response.data,
         message: 'Budgets retrieved successfully'
       };
-    } catch (error) {
-      // For all other users, return empty data if backend fails
+    } catch (error: any) {
+      if (error.response && error.response.status === 401) {
+        console.error('[budgetAPI] 401 Unauthorized:', error.response);
+      } else if (error.request) {
+        console.error('[budgetAPI] Network/CORS error:', error.request);
+      } else {
+        console.error('[budgetAPI] Error fetching budgets:', error);
+      }
+      if (error.stack) {
+        console.error('[budgetAPI] Error stack:', error.stack);
+      }
       return {
-        success: true,
+        success: false,
         data: [],
-        message: 'No budgets found - create your first budget to get started'
+        message: error.response?.data?.message || 'No budgets found - create your first budget to get started'
       };
     }
   },
-  
+
   create: async (budget: BudgetCreateRequest): Promise<ApiResponse<Budget>> => {
     try {
-      // Use real budget service API
-      const response = await apiClient.post('/api/budgets', budget);
+      const response = await budgetServiceClient.post('/api/budgets', budget);
       return {
         success: true,
         data: response.data,
@@ -471,11 +509,10 @@ export const budgetAPI = {
       };
     }
   },
-  
+
   update: async (id: number, budget: BudgetUpdateRequest): Promise<ApiResponse<Budget>> => {
     try {
-      // Use real budget service API
-      const response = await apiClient.put(`/api/budgets/${id}`, budget);
+      const response = await budgetServiceClient.put(`/api/budgets/${id}`, budget);
       return {
         success: true,
         data: response.data,
@@ -490,11 +527,10 @@ export const budgetAPI = {
       };
     }
   },
-  
+
   delete: async (id: number): Promise<ApiResponse<void>> => {
     try {
-      // Use real budget service API
-      await apiClient.delete(`/api/budgets/${id}`);
+      await budgetServiceClient.delete(`/api/budgets/${id}`);
       return {
         success: true,
         data: undefined,

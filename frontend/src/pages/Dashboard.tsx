@@ -173,6 +173,45 @@ const Dashboard: React.FC = () => {
         </Box>
       )}
 
+      {/* Detailed Account Information */}
+      {userFinancialData && (
+        <Box sx={{ mt: 4 }}>
+          <Typography variant="h5" sx={{ color: '#00ff88', mb: 2 }}>
+            Bank Accounts
+          </Typography>
+          {userFinancialData.bankAccounts.length === 0 ? (
+            <Typography color="textSecondary">No bank accounts found.</Typography>
+          ) : (
+            userFinancialData.bankAccounts.map(account => (
+              <Card key={account.id} sx={{ mb: 2, backgroundColor: '#222', border: '1px solid #00ff88' }}>
+                <CardContent>
+                  <Typography variant="subtitle1">{account.name} ({account.type})</Typography>
+                  <Typography>Balance: ${account.balance.toLocaleString()}</Typography>
+                </CardContent>
+              </Card>
+            ))
+          )}
+
+          <Typography variant="h5" sx={{ color: '#00ff88', mt: 4, mb: 2 }}>
+            Credit Cards
+          </Typography>
+          {userFinancialData.creditCards.length === 0 ? (
+            <Typography color="textSecondary">No credit cards found.</Typography>
+          ) : (
+            userFinancialData.creditCards.map(card => (
+              <Card key={card.id} sx={{ mb: 2, backgroundColor: '#222', border: '1px solid #00ff88' }}>
+                <CardContent>
+                  <Typography variant="subtitle1">{card.name}</Typography>
+                  <Typography>Limit: ${card.limit.toLocaleString()}</Typography>
+                  <Typography>Balance: ${card.balance.toLocaleString()}</Typography>
+                  <Typography>APR: {card.apr}%</Typography>
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </Box>
+      )}
+
       <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
         <Box sx={{ flex: '2 1 60%', minWidth: '300px' }}>
           <Paper sx={{ 

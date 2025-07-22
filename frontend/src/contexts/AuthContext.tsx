@@ -15,15 +15,37 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // On mount, do not use localStorage for session persistence
-  // On mount, restore token from localStorage if present
+  // On mount, restore token from localStorage if present and fetch user profile
   useEffect(() => {
     const storedToken = localStorage.getItem('personalfinance_token');
     if (storedToken) {
       setToken(storedToken);
       setAuthToken(storedToken);
+      console.log('Auth token restored from localStorage:', storedToken);
+      // Fetch user profile using the token
+      (async () => {
+        setIsLoading(true);
+        try {
+          const result = await require('../services/apiService').userAPI.getProfile();
+          if (result.success) {
+            setUser(result.data);
+            console.log('User profile restored after refresh:', result.data);
+          } else {
+            setUser(null);
+            console.warn('Failed to restore user profile after refresh:', result.message);
+          }
+        } catch (error) {
+          setUser(null);
+          console.error('Error restoring user profile after refresh:', error);
+        } finally {
+          setIsLoading(false);
+        }
+      })();
+    } else {
+      setUser(null);
+      console.warn('No auth token found in localStorage on reload.');
+      setIsLoading(false);
     }
-    setIsLoading(false);
   }, []);
 
 
