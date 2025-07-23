@@ -2,6 +2,8 @@ package com.personalfinance.user.controller;
 
 import com.personalfinance.user.model.Goal;
 import com.personalfinance.user.service.GoalService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -12,7 +14,9 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/goals")
 public class GoalController {
+
     private final GoalService goalService;
+    private static final Logger logger = LoggerFactory.getLogger(GoalController.class);
 
     public GoalController(GoalService goalService) {
         this.goalService = goalService;
@@ -28,7 +32,10 @@ public class GoalController {
         if (userDetails instanceof UserDetailsImpl) {
             goal.setUserId(((UserDetailsImpl) userDetails).getId());
         }
-        return goalService.createGoal(goal);
+        logger.info("[GoalController] Received createGoal request: name={}, dueDate={}, targetAmount={}, currentAmount={}", goal.getName(), goal.getDueDate(), goal.getTargetAmount(), goal.getCurrentAmount());
+        Goal savedGoal = goalService.createGoal(goal);
+        logger.info("[GoalController] Saved Goal: id={}, name={}, dueDate={}, createdAt={}, updatedAt={}", savedGoal.getId(), savedGoal.getName(), savedGoal.getDueDate(), savedGoal.getCreatedAt(), savedGoal.getUpdatedAt());
+        return savedGoal;
     }
 
     @PutMapping("/{id}")

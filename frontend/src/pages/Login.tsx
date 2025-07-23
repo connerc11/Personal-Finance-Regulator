@@ -66,7 +66,7 @@ const Login: React.FC = () => {
       // Redirect to intended page or dashboard
       navigate(from, { replace: true });
     } catch (error) {
-      setError('Sign in has failed');
+      setError('Wrong username or password');
     } finally {
       setLoading(false);
     }

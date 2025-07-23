@@ -1,5 +1,6 @@
 package com.personalfinance.user.controller;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -255,7 +256,7 @@ public class SaveSpotlightController {
             sharedGoal.setTargetAmount(10000.0);
             sharedGoal.setCurrentAmount(3000.0);
             sharedGoal.setCategory("Other");
-            sharedGoal.setTargetDate(LocalDateTime.now().plusMonths(6));
+            sharedGoal.setTargetDate(LocalDate.now().plusMonths(6));
             
             sharedGoal = sharedGoalRepository.save(sharedGoal);
             

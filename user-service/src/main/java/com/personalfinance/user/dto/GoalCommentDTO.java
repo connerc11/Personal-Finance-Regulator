@@ -1,13 +1,13 @@
 package com.personalfinance.user.dto;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 public class GoalCommentDTO {
     private Long id;
     private Long goalId;
     private Long userId;
     private String comment;
-    private LocalDateTime timestamp;
+    private LocalDate timestamp;
     private Boolean isEdited;
     private UserInfo user;
 
@@ -47,7 +47,7 @@ public class GoalCommentDTO {
     public GoalCommentDTO() {}
 
     public GoalCommentDTO(Long id, Long goalId, Long userId, String comment, 
-                         LocalDateTime timestamp, Boolean isEdited) {
+                         LocalDate timestamp, Boolean isEdited) {
         this.id = id;
         this.goalId = goalId;
         this.userId = userId;
@@ -89,11 +89,11 @@ public class GoalCommentDTO {
         this.comment = comment;
     }
 
-    public LocalDateTime getTimestamp() {
+    public LocalDate getTimestamp() {
         return timestamp;
     }
 
-    public void setTimestamp(LocalDateTime timestamp) {
+    public void setTimestamp(LocalDate timestamp) {
         this.timestamp = timestamp;
     }
 

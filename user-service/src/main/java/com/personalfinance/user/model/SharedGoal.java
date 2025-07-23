@@ -1,16 +1,16 @@
 package com.personalfinance.user.model;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
 
 @Entity
 @Table(name = "shared_goals")
@@ -41,7 +41,7 @@ public class SharedGoal {
     private String category;
 
     @Column(name = "target_date", nullable = false)
-    private LocalDateTime targetDate;
+    private LocalDate targetDate;
 
     @Column(name = "is_public", nullable = false)
     private Boolean isPublic = true;
@@ -53,10 +53,10 @@ public class SharedGoal {
     private Integer commentsCount = 0;
 
     @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
+    private LocalDate createdAt;
 
     @Column(name = "updated_at", nullable = false)
-    private LocalDateTime updatedAt;
+    private LocalDate updatedAt;
 
     // Join with User entity
     @ManyToOne(fetch = FetchType.LAZY)
@@ -65,12 +65,12 @@ public class SharedGoal {
 
     // Constructors
     public SharedGoal() {
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
+        this.createdAt = LocalDate.now();
+        this.updatedAt = LocalDate.now();
     }
 
     public SharedGoal(Long userId, Long goalId, String title, String description, 
-                     Double targetAmount, Double currentAmount, String category, LocalDateTime targetDate) {
+                     Double targetAmount, Double currentAmount, String category, LocalDate targetDate) {
         this();
         this.userId = userId;
         this.goalId = goalId;
@@ -153,11 +153,11 @@ public class SharedGoal {
         this.category = category;
     }
 
-    public LocalDateTime getTargetDate() {
+    public LocalDate getTargetDate() {
         return targetDate;
     }
 
-    public void setTargetDate(LocalDateTime targetDate) {
+    public void setTargetDate(LocalDate targetDate) {
         this.targetDate = targetDate;
     }
 
@@ -185,19 +185,19 @@ public class SharedGoal {
         this.commentsCount = commentsCount;
     }
 
-    public LocalDateTime getCreatedAt() {
+    public LocalDate getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(LocalDateTime createdAt) {
+    public void setCreatedAt(LocalDate createdAt) {
         this.createdAt = createdAt;
     }
 
-    public LocalDateTime getUpdatedAt() {
+    public LocalDate getUpdatedAt() {
         return updatedAt;
     }
 
-    public void setUpdatedAt(LocalDateTime updatedAt) {
+    public void setUpdatedAt(LocalDate updatedAt) {
         this.updatedAt = updatedAt;
     }
 

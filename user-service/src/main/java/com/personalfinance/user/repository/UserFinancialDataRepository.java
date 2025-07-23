@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 
 public interface UserFinancialDataRepository extends JpaRepository<UserFinancialData, Long> {
+
     Optional<UserFinancialData> findByUserId(Long userId);
 
     @Modifying

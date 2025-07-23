@@ -1,22 +1,23 @@
 package com.personalfinance.transaction.model;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Table;
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Positive;
 
 @Entity
 @Table(name = "transactions")
@@ -48,7 +49,7 @@ public class Transaction {
     private Category category;
 
     @Column(name = "transaction_date")
-    private LocalDateTime transactionDate;
+    private LocalDate transactionDate;
 
     @Column(length = 500)
     private String notes;
@@ -74,7 +75,7 @@ public class Transaction {
         this.amount = amount;
         this.type = type;
         this.category = category;
-        this.transactionDate = LocalDateTime.now();
+        this.transactionDate = LocalDate.now();
     }
 
     // Getters and Setters
@@ -96,8 +97,13 @@ public class Transaction {
     public Category getCategory() { return category; }
     public void setCategory(Category category) { this.category = category; }
 
-    public LocalDateTime getTransactionDate() { return transactionDate; }
-    public void setTransactionDate(LocalDateTime transactionDate) { this.transactionDate = transactionDate; }
+    public LocalDate getTransactionDate() {
+        return transactionDate;
+    }
+
+    public void setTransactionDate(LocalDate transactionDate) {
+        this.transactionDate = transactionDate;
+    }
 
     public String getNotes() { return notes; }
     public void setNotes(String notes) { this.notes = notes; }

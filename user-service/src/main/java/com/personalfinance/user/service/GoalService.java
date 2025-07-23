@@ -8,6 +8,7 @@ import java.util.Optional;
 
 @Service
 public class GoalService {
+
     private final GoalRepository goalRepository;
 
     public GoalService(GoalRepository goalRepository) {
@@ -28,15 +29,17 @@ public class GoalService {
 
     public Goal updateGoal(Long id, Goal updatedGoal) {
         return goalRepository.findById(id)
-            .map(goal -> {
-                goal.setName(updatedGoal.getName());
-                goal.setTargetAmount(updatedGoal.getTargetAmount());
-                goal.setCurrentAmount(updatedGoal.getCurrentAmount());
-                goal.setDueDate(updatedGoal.getDueDate());
-                goal.setUpdatedAt(java.time.LocalDateTime.now());
-                return goalRepository.save(goal);
-            })
-            .orElseThrow(() -> new RuntimeException("Goal not found"));
+                .map(goal -> {
+                    goal.setName(updatedGoal.getName());
+                    goal.setTargetAmount(updatedGoal.getTargetAmount());
+                    goal.setCurrentAmount(updatedGoal.getCurrentAmount());
+                    goal.setDueDate(updatedGoal.getDueDate());
+                    goal.setDescription(updatedGoal.getDescription());
+                    goal.setPriority(updatedGoal.getPriority());
+                    goal.setUpdatedAt(java.time.LocalDateTime.now());
+                    return goalRepository.save(goal);
+                })
+                .orElseThrow(() -> new RuntimeException("Goal not found"));
     }
 
     public void deleteGoal(Long id) {

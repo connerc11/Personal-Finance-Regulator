@@ -1,16 +1,16 @@
 package com.personalfinance.user.model;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.Table;
 
 @Entity
 @Table(name = "goal_comments")
@@ -29,7 +29,7 @@ public class GoalComment {
     private String comment;
 
     @Column(nullable = false)
-    private LocalDateTime timestamp;
+    private LocalDate timestamp;
 
     @Column(name = "is_edited", nullable = false)
     private Boolean isEdited = false;
@@ -46,7 +46,7 @@ public class GoalComment {
 
     // Constructors
     public GoalComment() {
-        this.timestamp = LocalDateTime.now();
+        this.timestamp = LocalDate.now();
     }
 
     public GoalComment(Long goalId, Long userId, String comment) {
@@ -89,11 +89,11 @@ public class GoalComment {
         this.comment = comment;
     }
 
-    public LocalDateTime getTimestamp() {
+    public LocalDate getTimestamp() {
         return timestamp;
     }
 
-    public void setTimestamp(LocalDateTime timestamp) {
+    public void setTimestamp(LocalDate timestamp) {
         this.timestamp = timestamp;
     }
 

@@ -48,6 +48,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }, []);
 
+  // Always update auth token for API clients when user or token changes
+  useEffect(() => {
+    if (token) {
+      setAuthToken(token);
+      console.log('[AuthContext] setAuthToken called for token:', token);
+    } else {
+      setAuthToken(null);
+      console.log('[AuthContext] setAuthToken called with null');
+    }
+  }, [token, user]);
+
 
   // Login using backend API
   const login = async (email: string, password: string): Promise<void> => {

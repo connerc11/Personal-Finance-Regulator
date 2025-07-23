@@ -1,5 +1,6 @@
 package com.personalfinance.user.dto;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public class SharedGoalDTO {
@@ -11,15 +12,15 @@ public class SharedGoalDTO {
     private Double targetAmount;
     private Double currentAmount;
     private String category;
-    private LocalDateTime targetDate;
     private Boolean isPublic;
     private Integer likesCount;
     private Integer commentsCount;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
     private Double progress;
     private Boolean isLiked;
     private UserInfo user;
+    private LocalDate targetDate;
+    private LocalDate createdAt;
+    private LocalDate updatedAt;
 
     // User info nested class
     public static class UserInfo {
@@ -121,13 +122,6 @@ public class SharedGoalDTO {
         this.category = category;
     }
 
-    public LocalDateTime getTargetDate() {
-        return targetDate;
-    }
-
-    public void setTargetDate(LocalDateTime targetDate) {
-        this.targetDate = targetDate;
-    }
 
     public Boolean getIsPublic() {
         return isPublic;
@@ -153,22 +147,31 @@ public class SharedGoalDTO {
         this.commentsCount = commentsCount;
     }
 
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
 
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
+    public LocalDate getTargetDate() {
+    return targetDate;
+}
+public void setTargetDate(LocalDate targetDate) {
+    this.targetDate = targetDate;
+}
 
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
+public LocalDate getCreatedAt() {
+    return createdAt;
+}
+public void setCreatedAt(LocalDate createdAt) {
+    this.createdAt = createdAt;
+}
 
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
-    }
+public LocalDate getUpdatedAt() {
+    return updatedAt;
+}
+public void setUpdatedAt(LocalDate updatedAt) {
+    this.updatedAt = updatedAt;
+}
 
+  
+
+  
     public Double getProgress() {
         return progress;
     }

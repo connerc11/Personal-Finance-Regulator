@@ -14,3 +14,8 @@ spring:
       ddl-auto: create-drop
     database-platform: org.hibernate.dialect.H2Dialect
     show-sql: true
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          secret-key: Y1JqNmM2cFNWcXY5ckYyNGFKcGJEa0I3V1FyU3ZLdDhON2tMWTNxWGpIcjlYN0Z2TjJaZ05NeDVwSDBmUDBaQg==

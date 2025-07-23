@@ -22,6 +22,8 @@ spring:
 logging:
   level:
     com.personalfinance.transaction: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
 
 management:
   endpoints:

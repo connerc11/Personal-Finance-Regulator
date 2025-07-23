@@ -1,6 +1,7 @@
 package com.personalfinance.transaction.dto;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 import com.personalfinance.transaction.model.Transaction;
@@ -13,7 +14,7 @@ public class TransactionResponse {
     private BigDecimal amount;
     private Transaction.TransactionType type;
     private Transaction.Category category;
-    private LocalDateTime transactionDate;
+    private LocalDate transactionDate;
     private String notes;
     private String location;
     private String merchant;
@@ -57,8 +58,13 @@ public class TransactionResponse {
     public Transaction.Category getCategory() { return category; }
     public void setCategory(Transaction.Category category) { this.category = category; }
 
-    public LocalDateTime getTransactionDate() { return transactionDate; }
-    public void setTransactionDate(LocalDateTime transactionDate) { this.transactionDate = transactionDate; }
+    public LocalDate getTransactionDate() {
+        return transactionDate;
+    }
+
+    public void setTransactionDate(LocalDate transactionDate) {
+        this.transactionDate = transactionDate;
+    }
 
     public String getNotes() { return notes; }
     public void setNotes(String notes) { this.notes = notes; }

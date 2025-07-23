@@ -18,6 +18,11 @@ spring:
       hibernate:
         format_sql: true
         default_schema: public
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          secret-key: Y1JqNmM2cFNWcXY5ckYyNGFKcGJEa0I3V1FyU3ZLdDhON2tMWTNxWGpIcjlYN0Z2TjJaZ05NeDVwSDBmUDBaQg==
 
 management:
   endpoints:
@@ -27,4 +32,7 @@ management:
 
 logging:
   level:
+    root: DEBUG
     com.personalfinance.budget: DEBUG
+    RequestLogger: DEBUG
+    JwtAuthLogger: DEBUG

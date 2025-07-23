@@ -20,7 +20,10 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
     @Query("SELECT cm FROM ChatMessage cm JOIN FETCH cm.user WHERE cm.roomId = :roomId ORDER BY cm.timestamp ASC")
     List<ChatMessage> findByRoomIdWithUserOrderByTimestampAsc(Long roomId);
     
-    @Query("SELECT cm FROM ChatMessage cm JOIN FETCH cm.user WHERE cm.roomId = :roomId ORDER BY cm.timestamp DESC")
+    @Query(
+        value = "SELECT cm FROM ChatMessage cm JOIN FETCH cm.user WHERE cm.roomId = :roomId ORDER BY cm.timestamp DESC",
+        countQuery = "SELECT count(cm) FROM ChatMessage cm WHERE cm.roomId = :roomId"
+    )
     Page<ChatMessage> findByRoomIdWithUserOrderByTimestampDesc(Long roomId, Pageable pageable);
     
     List<ChatMessage> findByUserIdOrderByTimestampDesc(Long userId);

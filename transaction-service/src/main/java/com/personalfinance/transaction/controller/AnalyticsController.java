@@ -8,6 +8,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,8 +22,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.personalfinance.transaction.dto.TransactionResponse;
 import com.personalfinance.transaction.model.Transaction;
 import com.personalfinance.transaction.service.TransactionService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @RestController
 @RequestMapping("/analytics")

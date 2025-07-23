@@ -128,7 +128,7 @@ const Budgets: React.FC = () => {
         // Handle both date and transactionDate fields from backend
         const transactionDate = new Date(transaction.transactionDate || transaction.date);
         const isExpense = transaction.type === 'EXPENSE';
-        const categoriesMatch = transaction.category.toLowerCase() === budget.category.toLowerCase() ||
+        const categoriesMatch = (transaction.category || '').toLowerCase() === (budget.category || '').toLowerCase() ||
                                (transaction.category === 'GROCERIES' && budget.category === 'Groceries') ||
                                (transaction.category === 'DINING' && budget.category === 'Food & Dining') ||
                                (transaction.category === 'TRANSPORTATION' && budget.category === 'Transportation');
@@ -364,7 +364,9 @@ const Budgets: React.FC = () => {
   };
 
   const formatPeriodForDisplay = (period: string) => {
-    return period.toLowerCase().charAt(0).toUpperCase() + period.toLowerCase().slice(1);
+    if (!period) return '';
+    const safePeriod = period.toLowerCase();
+    return safePeriod.charAt(0).toUpperCase() + safePeriod.slice(1);
   };
 
   return (

@@ -1,15 +1,21 @@
-server:
-  port: 8080
-
 spring:
+  server:
+    port: 8080
+  jpa:
+    open-in-view: false
   application:
     name: api-gateway
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          secret-key: Y1JqNmM2cFNWcXY5ckYyNGFKcGJEa0I3V1FyU3ZLdDhON2tMWTNxWGpIcjlYN0Z2TjJaZ05NeDVwSDBmUDBaQg==
   cloud:
     gateway:
       globalcors:
-        cors-configurations:
+        corsConfigurations:
           '[/**]':
-            allowedOriginPatterns: "*"
+            allowedOrigins: "http://localhost:3000"
             allowedMethods: "*"
             allowedHeaders: "*"
             allowCredentials: true
@@ -32,12 +38,6 @@ spring:
             - Path=/api/budgets/**
           filters:
             - StripPrefix=1
-        - id: scheduled-purchase-service
-          uri: http://localhost:8084
-          predicates:
-            - Path=/api/scheduled-purchases/**
-          filters:
-            - StripPrefix=1
         - id: analytics-service
           uri: http://localhost:8082  # Route to transaction service since analytics are part of it
           predicates:
@@ -49,13 +49,14 @@ spring:
           args:
             retries: 3
             statuses: BAD_GATEWAY
-
-logging:
-  level:
-    org.springframework.cloud.gateway: DEBUG
-
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info,gateway
+  logging:
+    level:
+      root: DEBUG
+      RequestLogger: DEBUG
+      JwtAuthLogger: DEBUG
+      org.springframework.cloud.gateway: DEBUG
+  management:
+    endpoints:
+      web:
+        exposure:
+          include: health,info,gateway

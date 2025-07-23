@@ -1,6 +1,6 @@
 package com.personalfinance.user.model;
 
-import jakarta.persistence.*;
+import javax.persistence.*;
 // import lombok.*; // Removed Lombok, using explicit constructors/getters/setters
 import java.time.LocalDateTime;
 
@@ -8,6 +8,7 @@ import java.time.LocalDateTime;
 @Table(name = "user_financial_data")
 // Removed Lombok annotations; explicit constructors/getters/setters are used
 public class UserFinancialData {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -22,7 +23,8 @@ public class UserFinancialData {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    public UserFinancialData() {}
+    public UserFinancialData() {
+    }
 
     public UserFinancialData(Long id, Long userId, com.fasterxml.jackson.databind.JsonNode data, LocalDateTime updatedAt) {
         this.id = id;
@@ -31,15 +33,35 @@ public class UserFinancialData {
         this.updatedAt = updatedAt;
     }
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public Long getId() {
+        return id;
+    }
 
-    public Long getUserId() { return userId; }
-    public void setUserId(Long userId) { this.userId = userId; }
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-    public com.fasterxml.jackson.databind.JsonNode getData() { return data; }
-    public void setData(com.fasterxml.jackson.databind.JsonNode data) { this.data = data; }
+    public Long getUserId() {
+        return userId;
+    }
 
-    public LocalDateTime getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(LocalDateTime updatedAt) { this.updatedAt = updatedAt; }
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
+
+    public com.fasterxml.jackson.databind.JsonNode getData() {
+        return data;
+    }
+
+    public void setData(com.fasterxml.jackson.databind.JsonNode data) {
+        this.data = data;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
 }

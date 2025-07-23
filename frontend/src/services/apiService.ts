@@ -17,8 +17,19 @@ const apiClient = axios.create({
 // Auth token management for all API clients
 let currentToken: string | null = null;
 
+// Restore token from localStorage on module load
+const storedToken = localStorage.getItem('authToken');
+if (storedToken) {
+  currentToken = storedToken;
+}
+
 export function setAuthToken(token: string | null) {
   currentToken = token;
+  if (token) {
+    localStorage.setItem('authToken', token);
+  } else {
+    localStorage.removeItem('authToken');
+  }
 }
 
 function attachAuthToken(config: any) {
@@ -77,7 +88,7 @@ budgetServiceClient.interceptors.response.use(
 
 
 const analyticsServiceClient = axios.create({
-  baseURL: 'http://localhost:8081', // Use user-service directly
+  baseURL: 'http://localhost:8080', // Use API gateway for analytics requests
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',

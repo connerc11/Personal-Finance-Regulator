@@ -1,6 +1,6 @@
 package com.personalfinance.user.model;
 
-import jakarta.persistence.*;
+import javax.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -24,8 +24,18 @@ public class Goal {
     @Column(name = "current_amount", nullable = false)
     private BigDecimal currentAmount = BigDecimal.ZERO;
 
+    @com.fasterxml.jackson.annotation.JsonFormat(pattern = "yyyy-MM-dd")
     @Column(name = "due_date")
     private LocalDate dueDate;
+
+    @Column(name = "description")
+    private String description;
+
+    @Column(name = "priority")
+    private String priority;
+
+    @Column(name = "category")
+    private String category;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
@@ -52,6 +62,15 @@ public class Goal {
 
     public LocalDate getDueDate() { return dueDate; }
     public void setDueDate(LocalDate dueDate) { this.dueDate = dueDate; }
+
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
+
+    public String getPriority() { return priority; }
+    public void setPriority(String priority) { this.priority = priority; }
+
+    public String getCategory() { return category; }
+    public void setCategory(String category) { this.category = category; }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

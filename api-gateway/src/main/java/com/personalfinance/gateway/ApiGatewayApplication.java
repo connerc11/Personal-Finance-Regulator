@@ -37,4 +37,5 @@ public class ApiGatewayApplication {
                         .uri("forward:/"))
                 .build();
     }
+
 }

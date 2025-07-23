@@ -32,7 +32,7 @@ import com.personalfinance.user.repository.UserPreferencesRepository;
 import com.personalfinance.user.repository.UserRepository;
 import com.personalfinance.user.security.UserDetailsImpl;
 
-import jakarta.validation.Valid;
+import javax.validation.Valid;
 
 @RestController
 @RequestMapping("/api/users")  // Updated for API Gateway and frontend consistency

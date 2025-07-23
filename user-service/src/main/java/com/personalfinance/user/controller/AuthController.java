@@ -20,7 +20,7 @@ import com.personalfinance.user.repository.UserRepository;
 import com.personalfinance.user.security.JwtUtils;
 import com.personalfinance.user.security.UserDetailsImpl;
 
-import jakarta.validation.Valid;
+import javax.validation.Valid;
 
 @RestController
 @RequestMapping("/api/users/auth")  // Updated to match frontend and security config

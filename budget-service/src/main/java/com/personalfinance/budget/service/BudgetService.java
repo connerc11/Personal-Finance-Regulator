@@ -17,11 +17,13 @@ import com.personalfinance.budget.repository.BudgetRepository;
 @Service
 @Transactional
 public class BudgetService {
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(BudgetService.class);
 
     @Autowired
     private BudgetRepository budgetRepository;
 
     public BudgetResponse createBudget(BudgetCreateRequest request) {
+        log.info("[BudgetService] Creating budget: {}", request);
         Budget budget = new Budget();
         budget.setUserId(request.getUserId());
         budget.setName(request.getName());
@@ -37,6 +39,7 @@ public class BudgetService {
 
     @Transactional(readOnly = true)
     public List<BudgetResponse> getBudgetsByUser(Long userId) {
+        log.info("[BudgetService] Fetching budgets for userId={}", userId);
         List<Budget> budgets = budgetRepository.findByUserIdOrderByCreatedAtDesc(userId);
         return budgets.stream()
                 .map(BudgetResponse::new)
@@ -45,6 +48,7 @@ public class BudgetService {
 
     @Transactional(readOnly = true)
     public List<BudgetResponse> getAllBudgets() {
+        log.info("[BudgetService] Fetching all budgets");
         List<Budget> budgets = budgetRepository.findAll();
         return budgets.stream()
                 .map(BudgetResponse::new)
@@ -53,11 +57,13 @@ public class BudgetService {
 
     @Transactional(readOnly = true)
     public Optional<BudgetResponse> getBudgetById(Long id) {
+        log.info("[BudgetService] Fetching budget by id={}", id);
         return budgetRepository.findById(id)
                 .map(BudgetResponse::new);
     }
 
     public BudgetResponse updateBudget(Long id, BudgetUpdateRequest request) {
+        log.info("[BudgetService] Updating budget id={}, data={}", id, request);
         Budget budget = budgetRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Budget not found with id: " + id));
 
@@ -85,6 +91,7 @@ public class BudgetService {
     }
 
     public void deleteBudget(Long id) {
+        log.info("[BudgetService] Deleting budget id={}", id);
         if (!budgetRepository.existsById(id)) {
             throw new RuntimeException("Budget not found with id: " + id);
         }
